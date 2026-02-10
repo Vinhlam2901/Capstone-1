@@ -1,0 +1,127 @@
+//===============================DONE==========================================
+//RTYPE
+00000013      // 0. NOP
+00100093      // 1. addi  x1, x0, 1
+ffe00113      // 2. addi  x2, x0,-2
+002081b3      // 3. add   x3, x1, x2   -> x4 = 1 + -2 = -1         // done
+40308233      // 4. sub   x4, x1, x3   -> x4 = 1 - -1 = 2       // done
+402082b3      // 5. sub   x5, x1, x2   -> x4 = 1 - -2 = 3          // done
+00209333      // 6. sll   x6, x1, x2   -> x4 = 1 << FE = 400000  // done
+001123b3      // 7. slt   x7, x2, x1   -> x4 = (1 < 15) = 01       // done      
+0030a433      // 8. slt   x8, x1, x3   -> x4 = (11 < -2) = 00     // done
+001134b3      // 9. sltu  x9, x2, x1   -> x1 = 01                  // done
+00113533      // 10. sltu x10, x2, x1   -> x1 = 00                  // done
+0020c5b3      // 11. xor  x11, x1, x2   -> x4 = 10 ^ 20 = 30        // done    
+0030c633      // 12. xor  x12, x1, x3   -> x4 = 10 ^ (-10) = FC     // done
+4020d6b3      // 13. sra  x13, x1, x2   -> x4 = 10 >> 20 = 0        // done
+0020d733      // 14. srl  x14, x1, x2   -> x4 = 10 >> 20 = 0        // done
+0020e7b3      // 15. or   x15, x1, x2   -> x4 = 10 | 20 = 30        // done
+0020f833      // 16. and  x16, x1, x2   -> x4 = 10 & 20 = 0         // done
+//ITYPE
+00000013      // 17. addi  x0, x0, 0  -> x0 = 0         pc = 0            // done 
+ffd10213      // 18. addi  x4, x2, -3   -> x4 = 2 - 3 = -1          // done
+00111213      // 19. slli  x4, x2, 0x01 -> x4 = 2 << 1 = 4          // done
+0Aa11213      // 20. slli  x4, x2, 0xAA -> x4 = 5 << 01010          // done
+ff612213      // 21. slti  x4, x2, -10  -> x4 = (-2 < -10) = 00      // done
+03212213      // 22. slti  x4, x2, 50   -> x4 = (-2 < 50) = 01       // done
+0020b213      // 23. sltiu x4, x1, 1    -> x4 = (-2 < 1) = 0         // done
+0000b213      // 24. sltiu x4, x1, 0    -> x4 = (-2 < 3) = 1         // done
+02c0c213      // 25. xori  x4, x1, 44   -> x4 = 1 ^ 44 = 45         // done
+00215213      // 26. srli  x4, x2, 0x02 -> x4 = 5 >> 2 =            // done
+00b15213      // 27. srli  x4, x2, 0x0B -> x4 = 5 >> 01011          // done
+40115213      // 28. srai  x4, x2, 0x1  -> x4 = 5 >> 01101 = 0      // done
+4051d213      // 29. srai  x4, x3, 0x05 -> x4 = 5 >> 5 = FF          // done (bug ban dau do chua thay doi br_uns thanh so co dau) 
+00A0e213      // 30. ori   x4, x1, 10   -> x4 = 1 | 0x04 = 5        // done      r va i type co chung opcode
+01617213      // 31. andi  x4, x2, 22   -> x4 = 010 | 20 = 0        // done
+00100013      // 32. addi  x0, x0, 1    -> x0 = 0                   // done
+00a00893      // 33. addi  x17, x0, 10   -> x1 = 10                  // done
+00100913      // 34. addi  x18, x0, 1    -> x2 = 1                   // done
+01288033      // 35. add   x0, x17, x18   -> x0 = 0                   // done
+00100a13      // 36. addi  x20, x0, 1    -> x0 = 0                   // done
+// Data transfer
+00200023        // 37. sb x2, 0(x0)    -> mem0   = 0000000F         // done
+002002a3        // 38. sb x2, 5(x0)    -> mem1   = 00000F00         // done
+002004a3        // 39. sb x2, 9(x0)    -> mem7   = 000F0000         // done
+7e308f23        // 40. sb x3, 2046(x1) -> mem512 = FE000000         // done
+00101023        // 41. sh x1, 0(x0)    -> mem0   = 0000000F         // done
+001011a3        // 42. sh x1, 3(x0)    -> mem0   = 0000000F         // done
+0010a023        // 43. sw x1, 0(x0)    -> mem0   = 0000000F         // done
+//7fe08203        // 44. lb x4, 2046(x1) -> x4     = FFFFFFFE         // done
+//00000203        // 45 lb x4, 0(x0)    -> x4     = 0000000F         // done
+// Branch Compare
+//00208463        // beq  x1, x2, label (label =  8)    true: x3 = 5  -> false NOP // done
+//00209463        // bne  x1, x2, label1 (label =1 = 8) true: x3 = 5  -> flase NOP // done
+//0020c463        // blt  x1, x2, label2 (label2 = 8)   true: x3 = 5  -> false NOP // done
+//0020d463        // bge  x1, x2, label2 (label2 = 8)   true: x3 = 15 -> false NOP // done
+//0020e463        // bltu x1, x2, label2 (label2 = 8)   true: x3 = 5  -> false NOP // done
+//0020f463        // bgeu x1, x2, label2 (label2 = 8)   true: x3 = 5  -> false NOP // done
+//00000013        // NOP
+//00500193        // x3 = 5
+//00020067      // jalr x0, 0(x4)   = return -> pc = 0 + x4 = x4 // done
+//0080026f        // jal x4, 8     x4 = pc + 4               // done
+//================================SORT_MEMORY=======================================================
+//00300093    // addi x1, x0, 10  -> x1 = 10
+//00100023    // sb x1, 0(x0)     -> mem[0] = 10
+//00200113    // addi x2, x0, 9   -> x2 = 9
+//00200223    // sb x2, 4(x0)     -> mem[1] = 9
+//00100193    // addi x3, x0, 8   -> x3 = 8
+//00300423    // sb x3, 8(x0)     -> mem[2] = 8
+//00000083    // lb   x1, 0(x0)   -> x1 = 10
+//00400103    // lb   x2, 4(x0)   -> x2 = 9
+//0020c663    // blt  x1, x2, noSwap1 (noSwap1 = 12) -> if x1 < x2 pc += 12
+//00200023    // sb   x2, 0(x0)   if false -> x1 > x2 -> mem[0] = x2 = 9
+//00100223    // sb   x1, 4(x0)   then mem[1] = 10
+//00400103    // lb   x2, 4(x0)   -> x3 = mem[1]        // noSwap1
+//00800183    // lb   x3, 8(x0)   -> x2 = mem[2]
+//00314663    // blt  x2, x3, noSwap2 (noSwap2 = 12) -> x2 < x3 -> pc += 12
+//00300223    // sb   x3, 4(x0)   -> if x2 > x3 -> mem[1] = x3 
+//00200423    // sb   x2, 8(x0)   -> then       -> mem[2] = x2
+//00000083    // lb   x1, 0(x0)                         // noSwap2:
+//00400103    // lb   x2, 4(x0)   
+//0020c663    // blt  x1, x2, end  end = 12
+//00200023    // sb   x2, 0(x0)
+//00100223    // sb   x1, 4(x0)
+//00000013
+//================================PRIME=======================================================
+//00200a13    // addi x20, x0, 7  -> x20 = 7
+//00100093    // addi x1, x0, 1   -> x1 = 1
+//00200113    // addi x2, x0, 2   -> x2 = 2
+//001a71b3    // and x3, x20, x1  -> x3 = 1
+//021a0a63    // beq x20, x1, no_prime -> x20 == 1 ? pc += 52 : next
+//022a0c63    // beq x20, x2, prime    -> x20 == 2 ? pc += 56 : next
+//02018663    // beq x3, x0, no_prime  -> x3 == 0 ? pc += 52 : next
+//00100213    // addi x4, x0, 1   -> x4 = 1
+//014009b3    // add x19, x0, x20 -> x19 = x20 = 7
+//03420463
+//00220213
+//0049c863
+//404989b3
+//ff9ff06f
+//fe0216e3
+//00098463
+//ff9ff06f
+//01400f33
+//0080006f
+//014002b3
+//================================PERIPHERALS=======================================================
+//00100093        // addi x1, x0, 1
+//84100023        // sb x1, 0x840(x0) -> turn ledr[0] ON
+//84000083        // lb x1, 0x840(x0) -> turn ledr[0] ON
+//00100093        // addi x1, x0, 1
+//0ff00093        // addi x1, x0, FF
+//84100023        // sb x1, 0x840(x0) -> turn ledr[0] ON
+//84000083        // lb x1, 0x840(x0) -> turn ledr[0] ON
+//84400083        // sb x1, 0x844(x0) -> turn ledg[0] ON
+//0ff00093        // addi x1, x0, FF
+//84100223        // sb x1, 0x844(x0) -> turn ledg[0] ON
+//00000013
+//a0000083        // lb x1, 0xA00(x0) -> read key0 signal
+//84100223        // sb x1, 0x844(x0) -> turn ledg[0] ON
+//84400083        // lb x1, 0x844(x0) -> turn ledg[0] ON
+
+//00a00093
+//01400113
+//002081b3
+//00302023
+//00002203
+
