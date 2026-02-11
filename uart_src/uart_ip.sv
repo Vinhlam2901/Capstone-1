@@ -155,14 +155,14 @@ module uart_ip (
   assign o_txrdy  = ~fifo_tx_full; 
   assign no_txrdy = fifo_tx_full;  // Active Low
   
-  assign lsr_wire.overrun_err   = lsr_oe_reg;         // ready to sent to rx_fifo from rx
-  assign lsr_wire.data_ready    = ~fifo_rx_empty;     // ready to sent to rx_fifo from rx
-  assign lsr_wire.thr_empty     = fifo_tx_empty;   
-  assign lsr_wire.parity_err    = 1'b0;                  // Chưa implement Parity
-  assign lsr_wire.frame_err     = framing_err; // Đã nối dây framing_err
-  assign lsr_wire.break_itr     = 1'b0;
-  assign lsr_wire.tx_empty      = fifo_tx_empty && tx_done; // Bit 6: TEMT (Cả FIFO và Shift Reg rỗng)
   assign lsr_wire.fifo_data_err = 1'b0;
+  assign lsr_wire.tx_empty      = fifo_tx_empty && tx_done; // Bit 6: TEMT (Cả FIFO và Shift Reg rỗng)
+  assign lsr_wire.thr_empty     = fifo_tx_empty;   
+  assign lsr_wire.break_itr     = 1'b0;
+  assign lsr_wire.frame_err     = framing_err; // Đã nối dây framing_err
+  assign lsr_wire.parity_err    = 1'b0;                  // Chưa implement Parity
+  assign lsr_wire.overrun_err   = lsr_oe_reg;         // ready to sent to rx_fifo from rx
+  assign lsr_wire.data_ready    = ~fifo_rx_empty && ~ni_cts; // ready to sent to rx_fifo from rx
 
   always_ff @(posedge i_clk or negedge ni_rst) begin
     if (!ni_rst) begin
