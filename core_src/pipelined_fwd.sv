@@ -1,22 +1,27 @@
 //===========================================================================================================
-// Project         : PIPELINED Model Forwarding of RISV - V
-// Module          : PIPELINED Model Forwarding
+// Project         : UART & RVV
+// Module          : Pipeline Forwarding Core RVV
 // File            : pipelined_fwd.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
-// Create date     : 10/11/2025
-// Updated date    : 11/12/2025 - Finished
-//=============================================================================================================
+// Create date     : 12/12/2025
+// Updated date    : 04/03/2026
+//============================================================================================================
 import package_param::*;
 module pipelined_fwd (
   input  wire        i_clk,
   input  wire        i_reset,
 
+  
   input  wire [31:0] i_io_sw,
+  
+  input  wire        i_uart_rx,
+  output wire        o_uart_tx, 
 
   output reg  [31:0] o_io_ledr,
   output reg  [31:0] o_io_ledg,
 
   output reg  [31:0] o_io_lcd,
+
 
   output reg  [6:0]  o_io_hex0,
   output reg  [6:0]  o_io_hex1,
@@ -404,7 +409,9 @@ always_comb begin : forwarding_detect
     .i_lsu_wren (ex_mem_reg.mem_wren    ),
     .i_lsu_rden (ex_mem_reg.mem_rden    ),
     .i_func3    (ex_mem_reg.inst[`FUNC3]),
+    .i_uart_rx  (i_uart_rx              ),
     .i_io_sw    (i_io_sw                ),
+    .o_uart_tx  (o_uart_tx              ),
     .o_io_hex0  (o_io_hex0              ),
     .o_io_hex1  (o_io_hex1              ),
     .o_io_hex2  (o_io_hex2              ),

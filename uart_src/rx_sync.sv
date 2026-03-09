@@ -6,7 +6,7 @@ and using one more FF to check between 2 signal previous and after through FF, i
 r the same then there is no metastability 
 */
 //===========================================================================================================
-// Project         : UART Protocol
+// Project         : UUART & RVV
 // Module          : Rx Synchronous
 // File            : rx_sync.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com

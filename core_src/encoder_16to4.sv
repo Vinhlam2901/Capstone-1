@@ -1,3 +1,11 @@
+//===========================================================================================================
+// Project         : UART & RVV
+// Module          : Encoder 5 to 32
+// File            : encoder_5to32.sv
+// Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
+// Create date     : 12/12/2025
+// Updated date    : 04/03/2026
+//============================================================================================================
 module encoder_16to4 (
     input       [15:0] y_i,
     output wire [3:0]  out_o

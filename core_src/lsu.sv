@@ -1,23 +1,26 @@
 //===========================================================================================================
-// Project         : Single Cycle of RISV - V
+// Project         : UART & RVV
 // Module          : Load Store Unit
 // File            : lsu.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
-// Create date     : 9/9/2025
-// Updated date    : 6/11/2025 - Finished
+// Create date     : 12/12/2025
+// Updated date    : 04/03/2026
 //============================================================================================================
+import package_param::*;
 module lsu (
   input  wire        i_clk,
   input  wire        i_reset,
 
-  input  wire [31:0] i_lsu_addr,
-  input  wire [31:0] i_st_data,
+  input  wire        i_uart_rx,
   input  wire        i_lsu_wren,
   input  wire        i_lsu_rden,
   input  wire [2:0]  i_func3,
-
+  input  wire [31:0] i_lsu_addr,
+  input  wire [31:0] i_st_data,
+  
   input  wire [31:0] i_io_sw,
-
+  
+  output wire        o_uart_tx,
   output reg  [6:0]  o_io_hex0,
   output reg  [6:0]  o_io_hex1,
   output reg  [6:0]  o_io_hex2,
@@ -34,20 +37,25 @@ module lsu (
   output reg  [31:0] o_io_ledg,
 
   output reg  [31:0] o_io_lcd
+  
 );
 
 //====================================DECLARATION==============================================================
+  lcr_t       lcr_reg;
   wire        is_ledr;
   wire        is_ledg;
   wire        is_hex03;
   wire        is_hex47;
   wire        is_lcd;
   wire        is_sw;
+  wire        is_uart;    // chip select
 
   wire        is_dmem;
   wire        is_out;
   wire        is_in;
+  wire        is_io;
 
+  wire [7:0]  uart_rdata;
   wire [15:0] dmem_ptr;
 
   reg         mem_wren;
@@ -74,12 +82,12 @@ module lsu (
 
 //====================================CODE====================================================================
   always_comb begin
-    is_ubyte = 1'b0;
-    is_sbyte = 1'b0;
-    is_uhb   = 1'b0;
-    is_shb   = 1'b0;
-    is_word  = 1'b0;
-    bmask_align = 4'b0;
+    is_ubyte       = 1'b0;
+    is_sbyte       = 1'b0;
+    is_uhb         = 1'b0;
+    is_shb         = 1'b0;
+    is_word        = 1'b0;
+    bmask_align    = 4'b0;
     bmask_misalign = 4'b0;
     case (i_func3)
       3'b000: is_sbyte = 1'b1;
@@ -167,17 +175,37 @@ module lsu (
     end
   end
 
-  assign dmem_ptr  =  i_lsu_addr[15:0];
-  assign is_dmem   =  ~i_lsu_addr[28];                           //0000 -> bit 28 == 0
-  assign is_out    =  (i_lsu_addr[28] && ~(i_lsu_addr[16])); //1000 -> a[28] & ~a[16]
-  assign is_in     =  (i_lsu_addr[28] &&   i_lsu_addr[16] ); //1001 -> a[28] & a[16]
+  assign dmem_ptr = i_lsu_addr[15:0];
+  assign is_dmem  = ~i_lsu_addr[28];                                                  // 0x0000 -> bit 28 == 0
+  assign is_out   = (i_lsu_addr[28] && ~i_lsu_addr[16]);                              // 0x1000 -> a[28] & ~a[16]
+  assign is_in    = (i_lsu_addr[28] &&  i_lsu_addr[16]);                              // 0x1001 -> a[28] & a[16]
+  // PRIPHERAL
+  assign is_ledr  = is_out && (~i_lsu_addr[14] && ~i_lsu_addr[13] && ~i_lsu_addr[12]); // 0x1000_0xxx
+  assign is_ledg  = is_out && (~i_lsu_addr[14] && ~i_lsu_addr[13] &&  i_lsu_addr[12]); // 0x1000_1xxx
+  assign is_hex03 = is_out && (~i_lsu_addr[14] &&  i_lsu_addr[13] && ~i_lsu_addr[12]); // 0x1000_2xxx
+  assign is_hex47 = is_out && (~i_lsu_addr[14] &&  i_lsu_addr[13] &&  i_lsu_addr[12]); // 0x1000_3xxx
+  assign is_lcd   = is_out && ( i_lsu_addr[14] && ~i_lsu_addr[13] && ~i_lsu_addr[12]); // 0x1000_4xxx
+  assign is_sw    = is_in  && ( i_lsu_addr[16] && ~i_lsu_addr[13]                   ); // 0x1001_0xxx
+  // UART
+  assign is_uart  = (i_lsu_addr[28] &&  i_lsu_addr[17]);                               // 0x1002 -> a[28] & a[17]
 
-  assign is_ledr   = is_out && (~i_lsu_addr[14] && ~i_lsu_addr[13] && ~i_lsu_addr[12]); // 0x1000_0xxx
-  assign is_ledg   = is_out && (~i_lsu_addr[14] && ~i_lsu_addr[13] &&  i_lsu_addr[12]); // 0x1000_1xxx
-  assign is_hex03  = is_out && (~i_lsu_addr[14] &&  i_lsu_addr[13] && ~i_lsu_addr[12]); // 0x1000_2xxx
-  assign is_hex47  = is_out && (~i_lsu_addr[14] &&  i_lsu_addr[13] &&  i_lsu_addr[12]); // 0x1000_3xxx
-  assign is_lcd    = is_out && ( i_lsu_addr[14] && ~i_lsu_addr[13] && ~i_lsu_addr[12]); // 0x1000_4xxx
-  assign is_sw     = is_in  && ( i_lsu_addr[16] && ~i_lsu_addr[13]                  ); // 0x1001_0xxx
+  uart_ip uart_dut (
+                    .i_clk (i_clk), 
+                    .ni_rst(i_reset),
+                    .i_data(i_st_data[7:0]), 
+                    .i_addr(i_lsu_addr[2:0]),
+                    .i_cs1 (is_uart), 
+                    .i_cs2 (1'b1), 
+                    .ni_cs3(1'b0),
+                    .i_ior (i_lsu_rden), 
+                    .ni_ior(~i_lsu_rden),
+                    .i_iow (i_lsu_wren), 
+                    .ni_iow(~i_lsu_wren),
+                    .o_data(uart_rdata), 
+                    .i_rxd (i_uart_rx), 
+                    .o_txd (o_uart_tx),
+                    .ni_cts(1'b0)
+                  );
 
   memory memory (
                 .i_clk  (i_clk                  ),
@@ -225,9 +253,9 @@ module lsu (
         o_ld_data = dmem;
       end
     end else if (i_lsu_wren && is_ledr) begin
-        ledr_next = st_wdata;
+      ledr_next = st_wdata;
     end else if (i_lsu_wren && is_ledg) begin
-        ledg_next = st_wdata;
+      ledg_next = st_wdata;
     end else if (i_lsu_wren && is_hex03) begin
           case (bmask_align)
             4'b0000: begin
@@ -306,6 +334,8 @@ module lsu (
         lcd_next = st_wdata;
       end else if (~i_lsu_wren && is_sw) begin
         o_ld_data = i_io_sw;
+      end else if (i_lsu_rden && is_uart) begin
+        o_ld_data = {{24{1'b0}}, uart_rdata};
       end
     end
 

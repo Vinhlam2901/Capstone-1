@@ -1,5 +1,5 @@
 //===========================================================================================================
-// Project         : UART Protocol
+// Project         : UART & RVV
 // Module          : UART RX FIFO
 // Author          : Chau Tran Vinh Lam
 // Create date     : 18/1/2026

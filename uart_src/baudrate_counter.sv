@@ -1,5 +1,5 @@
 //===========================================================================================================
-// Project         : UART Protocol
+// Project         : UART & RVV
 // Module          : Baudrate Generator (16x Mode)
 // Author          : Chau Tran Vinh Lam
 // Description     : Tạo ra xung tick với tần số = Baudrate * 16

@@ -1,3 +1,11 @@
+//===========================================================================================================
+// Project         : UART & RVV
+// Module          : Multiply Unit
+// File            : multiply_extension.sv
+// Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
+// Create date     : 12/12/2025
+// Updated date    : 04/03/2026
+//============================================================================================================
 module multiply_extension (
   input  wire [31:0] i_op_a,
   input  wire [31:0] i_op_b,

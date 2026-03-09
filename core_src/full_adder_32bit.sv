@@ -1,3 +1,11 @@
+//===========================================================================================================
+// Project         : UART & RVV
+// Module          : Full Adder 32 bit
+// File            : full_adder_32bit.sv
+// Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
+// Create date     : 12/12/2025
+// Updated date    : 04/03/2026
+//============================================================================================================
 module full_adder_32bit (
     input       [31:0] A_i,
     input       [31:0] Y_i,

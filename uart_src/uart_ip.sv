@@ -1,5 +1,5 @@
 //===========================================================================================================
-// Project         : UART Protocol
+// Project         : UART & RVV
 // Module          : UART 16550 IP
 // File            : uart_ip.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
@@ -22,9 +22,6 @@ module uart_ip (
   input  wire       ni_iow,         // write_en (neg)
   output reg  [7:0] o_data,         // data read
   output reg        o_out_vld,      // out valid
-  // dma input flags - Direct Memory Access: uart can receive data without cpu process each byte
-  input  wire       i_dma_rxend,    // flag when receive data finised
-  input  wire       i_dma_txend,    // flag when transmit data finised
   // dma control output
   output reg        o_rxrdy,        // ready to send received data to mem
   output reg        no_rxrdy,       // ready to send received data to mem (neg)
@@ -32,17 +29,9 @@ module uart_ip (
   output reg        no_txrdy,       // ready to receive data from mem (neg)
   // modem control input - read by core
   input  wire       ni_cts,         // clear to send neg flag
-  input  wire       ni_dsr,         // data set ready neg flag
-  input  wire       ni_ri,          // ring indicator neg flag
-  input  wire       ni_dcd,         // data career dectect neg flag
-  // modem control output - control by core
-  output reg        no_dtr,         // data terminal ready neg flag 
-  output reg        no_rts,         // request to send neg flag
-  output reg        no_out1,
-  output reg        no_out2,
   // serial communication signal
   input  wire       i_rxd,          // assert when no communication - connect to rx pin
-  output wire       o_rxd           // assert when no communication - connect to tx pin
+  output wire       o_txd           // assert when no communication - connect to tx pin
 );
 // addr [2:0]
 // 000: RHR Receiver Holding Register - Read Only - holding received data
@@ -116,7 +105,7 @@ module uart_ip (
     .i_fifo_empty  (fifo_tx_empty),
     .i_fifo_data   (fifo_tx_data),
     .o_fifo_rden   (fifo_tx_rden),
-    .o_tx_serial   (o_rxd),
+    .o_tx_serial   (o_txd),
     .o_tx_done_tick(tx_done)
   );
 

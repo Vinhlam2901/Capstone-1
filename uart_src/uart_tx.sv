@@ -1,5 +1,5 @@
 //===========================================================================================================
-// Project         : UART Protocol
+// Project         : UART & RVV
 // Module          : MODULE UART TRANSMITER
 // File            : uart_rx.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
@@ -89,8 +89,15 @@ module uart_tx (
             o_tx_done_tick <= 1'b0;
             o_fifo_rden    <= 1'b1;
             tx_shift_reg   <= i_fifo_data;
+            // ---------------------------------------------------------
+            // 😈 CHỌC PHÁ TẠI ĐÂY: Cố tình lật bit số 7 (MSB) của dữ liệu
+            // Thay vì: tx_shift_reg <= i_fifo_data;
+            // Bạn viết lại thành:
+            // tx_shift_reg   <= { ~i_fifo_data[7], i_fifo_data[6:0] };
+            // ---------------------------------------------------------
+            
           end
-        end 
+        end
         START: begin
           o_tx_serial <= 1'b0;
           o_fifo_rden <= '0;

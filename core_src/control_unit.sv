@@ -1,11 +1,11 @@
 //===========================================================================================================
-// Project         : Single Cycle of RISV - V
+// Project         : UART & RVV
 // Module          : Control Unit
 // File            : control_unit.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
-// Create date     : 13/9/2025
-// Updated date    : 6/11/2025 - Finished
-//=============================================================================================================
+// Create date     : 12/12/2025
+// Updated date    : 04/03/2026
+//============================================================================================================
 import package_param::*;
 module control_unit (
   input  wire  [31:0] inst,

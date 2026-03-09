@@ -1,5 +1,5 @@
 //===========================================================================================================
-// Project         : UART Protocol
+// Project         : UART & RVV
 // Module          : UART RX (Explicit FSM Style)
 // Author          : Chau Tran Vinh Lam
 // Create date     : 21/12/2025
