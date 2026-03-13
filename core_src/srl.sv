@@ -7,8 +7,8 @@
 // Updated date    : 6/11/2025 - Finished
 //===========================================================================================
 module srl (
-  input       [31:0] rs1_data,
-  input       [31:0] rs2_data,
+  input  wire [31:0] rs1_data,
+  input  wire [31:0] rs2_data,
   output wire [31:0] rd_data
 );
 //chi dich 5 bit thap nhat cua rs2_data

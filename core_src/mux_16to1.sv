@@ -4,13 +4,15 @@
 // File            : mux_16to1.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
 // Create date     : 9/9/2025
-// Updated date    : 6/11/2025 - Finished
+// Updated date    : 12/03/2025 - Finished
 //===========================================================================================
-module mux_16to1 (
-    input       [31:0] d0, d1, d2, d3, d4, d5, d6, d7,
-                       d8, d9, d10, d11, d12, d13, d14, d15,
-    input       [3:0]  s,
-    output wire [31:0] y_o          // output 32-bits
+module mux_16to1 #(
+  parameter WIDTH = 32
+)(
+    input       [WIDTH-1:0] d0, d1, d2, d3, d4, d5, d6, d7,
+                            d8, d9, d10, d11, d12, d13, d14, d15,
+    input       [3:0]       s,
+    output wire [WIDTH-1:0] y_o          // output 32-bits
 );
   assign y_o = s[3] ? (
                         s[2] ? (

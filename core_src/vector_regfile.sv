@@ -24,9 +24,9 @@ module vector_regfile #(
     output wire  [VLEN-1:0] o_vrs1_data,
     output wire  [VLEN-1:0] o_vrs2_data
 );
-//==================================Declaration==================================
-  wire [31:0]    out_o;
-  wire [SEW-1:0] lane_in  [0:SEW-1];
+//==================================Declaration====================================================================================================
+  wire [31:0]     out_o;
+  wire [SEW-1:0]  lane_in  [0:SEW-1];
   wire [VLEN-1:0] vreg_out [0:31];
   wire [VLEN-1:0] vrs1_data; 
   wire [VLEN-1:0] vrs2_data;
@@ -34,13 +34,13 @@ module vector_regfile #(
   wire vrs1_bypass_sel;
   wire vrs2_bypass_sel;
 
-  wire [31:0]   enb_rows;
-  reg           enb_cells;
-  reg [SEW-1:0] vlen_enb;
+  wire [31:0]    enb_rows;
+  reg            enb_cells;
+  reg  [SEW-1:0] vlen_enb;
 
-  genvar rows, cells, j, lanes;
+  genvar rows,lanes;
 
-//==================================INSTANTIATION==================================
+//==================================INSTANTIATION====================================================================================================
   decoder_5to32 decode (.a_i(i_vrd_addr), .out_o(out_o));
   always_comb begin
     case (vlen_set)
@@ -96,7 +96,7 @@ module vector_regfile #(
                       .d28(vreg_out[28]),.d29(vreg_out[29]),.d30(vreg_out[30]),.d31(vreg_out[31]),
                       .s(i_vrs2_addr),   .y_o(vrs2_data)
                     );
-//==================================READ_AFTER_WRITE====================
+//==================================READ_AFTER_WRITE======================================================================================
   assign vrs1_bypass_sel = (i_vrs1_addr == i_vrd_addr) && i_vrd_wren;
   assign vrs2_bypass_sel = (i_vrs2_addr == i_vrd_addr) && i_vrd_wren;
   // nếu đọc trùng với ghi thì lấy luôn data ghi vào của từng lane
@@ -105,15 +105,15 @@ module vector_regfile #(
       mux_2to1 #(.WIDTH(8)) bypass_mux_vrs1 (
         .d0_i(vrs1_data[lanes*8 + 7: lanes*8]),
         .d1_i(i_vrd_data[lanes*8 + 7: lanes*8]),
-        .s_i(vrs1_bypass_sel && vlen_enb[lanes]),
-        .y_o(o_vrs1_data[lanes*8 + 7: lanes*8])
+        .s_i (vrs1_bypass_sel && vlen_enb[lanes]),
+        .y_o (o_vrs1_data[lanes*8 + 7: lanes*8])
       );
 
     mux_2to1 #(.WIDTH(8)) bypass_mux_vrs2 (
         .d0_i(vrs2_data[lanes*8 + 7: lanes*8]),
         .d1_i(i_vrd_data[lanes*8 + 7: lanes*8]),
-        .s_i(vrs2_bypass_sel && vlen_enb[lanes]),
-        .y_o(o_vrs2_data[lanes*8 + 7: lanes*8])
+        .s_i (vrs2_bypass_sel && vlen_enb[lanes]),
+        .y_o (o_vrs2_data[lanes*8 + 7: lanes*8])
     );
     end
   endgenerate

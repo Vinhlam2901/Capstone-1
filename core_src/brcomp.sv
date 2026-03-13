@@ -9,7 +9,7 @@
 module brcomp (
     input  wire [31:0] i_rs1_data,
     input  wire [31:0] i_rs2_data,
-    input  wire        i_br_un,   // 1 if unsign, 0 if sign
+    input  wire        i_br_un,   //1 if unsign , 0 if sign
     output wire        o_br_equal,
     output wire        o_br_less
 );
@@ -19,10 +19,10 @@ module brcomp (
   wire o_br_less_uns, o_br_less_s;
   wire o_br_less1, o_br_less2, o_br_less3;
 //===============================================CODE================================================
-  add_subtract S1 (.a_i(i_rs1_data),.b_i(i_rs2_data),.cin_i(1'b1),.result_o(sub_o),.cout_o(cout));
+  add_subtract #(.WIDTH(32)) S1 (.a_i(i_rs1_data),.b_i(i_rs2_data),.cin_i(1'b1),.result_o(sub_o),.cout_o(cout));
   // sign check
-  assign  same_sign     = (i_rs1_data[31] && i_rs2_data[31]) ? 1'b1 : 1'b0;  // if same sign : 1
-  assign  diff_sign     = (i_rs1_data[31] ^  i_rs2_data[31]) ? 1'b1 : 1'b0;  // if diff sign : 1
+  assign  same_sign     = ~(i_rs1_data[31] ^ i_rs2_data[31]);  // if same sign : 1
+  assign  diff_sign     = (i_rs1_data[31] ^  i_rs2_data[31]);  // if diff sign : 1
   //o_br_less
   assign  o_br_less1    = (same_sign && sub_o[31]     ) ? 1'b1 :1'b0;     // same sign and have cout
   assign  o_br_less2    = (diff_sign && i_rs1_data[31]) ? 1'b1 : 1'b0;    // diff sign and rs1[31] = 1 (neg)

@@ -7,8 +7,8 @@
 // Updated date    : 04/03/2026
 //============================================================================================================
 module sll (
-  input       [31:0] rs1_data,
-  input       [31:0] rs2_data,
+  input  wire [31:0] rs1_data,
+  input  wire [31:0] rs2_data,
   output wire [31:0] rd_data
 );
 //chi dich 5 bit thap nhat cua rs2_data
