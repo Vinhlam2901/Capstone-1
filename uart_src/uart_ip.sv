@@ -126,7 +126,7 @@ module uart_ip (
     .ni_rst   (ni_rst && ~fcr_reg.tx_fifo_rst),
     .fifo_en  (fcr_reg.fifo_en),        
     .i_wren   (fifo_tx_wren),           // core write enable
-    .i_rden   (fifo_tx_rden),              // uart_tx read enable
+    .i_rden   (fifo_tx_rden),           // uart_tx read enable
     .wrdata   (i_data),                 // core write
     .rddata   (fifo_tx_data),           // uart_tx read
     .o_full   (fifo_tx_full),

@@ -8,6 +8,10 @@ package package_param;
    parameter BTYPE  = 7'b1100011;
    parameter U1TYPE = 7'b0110111;
    parameter U2TYPE = 7'b0010111;
+   parameter VECTOR = 7'b1010111;
+   parameter VXTYPE = 3'b100;
+   parameter VVTYPE = 3'b000;
+   parameter VITYPE = 3'b011;
 /*BAUDRATE: number of bit in 1s is [number_of_baud]
 f_fpga = CLK_FPGA
 f_baud = BAUD_x   (with x = 4800, 9600, 19200)
@@ -29,14 +33,22 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
 
    `define OPCODE       6:0
    `define RD_ADDR      11:7
+   `define VRD_ADDR     11:7  
    `define FUNC3        14:12
    `define RS1_ADDR     19:15
    `define RS2_ADDR     24:20
+   `define VS1_ADDR     19:15 
+   `define V_SIMM5      19:15 
+   `define VS2_ADDR     24:20  
    `define FUNC7        31:25
+   `define V_FUNCT6     31:26  
    `define IF_ID_WIDTH  64
    `define ID_EX_WIDTH  250
    `define EX_MEM_WIDTH 128
    `define MEM_WB_WIDTH 128
+   `define VM_MASK      25
+   
+   // Các trường dữ liệu đặc biệt của Vector
 //==================STRUCT=============================================================================================================
   typedef logic [31:0] word_t;
   typedef logic [4:0]  addr_t;
@@ -100,7 +112,7 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
 
     addr_t      rd_addr;
 
-    logic       o_insn_vld;
+    logic       o_insn_vld;   
     logic       rd_wren;
     logic [1:0] mem_to_reg;
   } mem_wb_reg_t;

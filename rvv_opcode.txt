@@ -1,0 +1,253 @@
+# format of a line in this file:
+# <instruction name> <args> <opcode>
+#
+# <opcode> is given by specifying one or more range/value pairs:
+# hi..lo=value or bit=value or arg=value (e.g. 6..2=0x45 10=1 rd=0)
+#
+# <args> is one of vd, vs3, vs1, vs2, vm, nf, wd, simm5, zimm10, zimm11
+
+# configuration setting
+# https://github.com/riscv/riscv-v-spec/blob/master/vcfg-format.adoc
+vsetivli     31=1 30=1 zimm10    zimm5 14..12=0x7 rd 6..0=0x57
+vsetvli      31=0 zimm11          rs1 14..12=0x7 rd 6..0=0x57
+vsetvl       31=1 30..25=0x0 rs2  rs1 14..12=0x7 rd 6..0=0x57
+/////////////////////////////////////////////////////////////////////////////////////////////
+.vv Vector - Vector
+.vx Vector - eXtra / Scalar
+.vi Vector - Immediate
+//////////////////////////////////////////////////////////////////////////////////////////////
+#
+# Vector Loads and Store
+# https://github.com/riscv/riscv-v-spec/blob/master/vmem-format.adoc
+#
+# Vector Unit-Stride Instructions (including segment part)
+# https://github.com/riscv/riscv-v-spec/blob/master/v-spec.adoc#74-vector-unit-stride-instructions
+==============================USABLE=============================================================
+==============LOAD - STORE 8 BIT=======================================
+1.  vle8.v         nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x0  vd 6..0=0x07
+2.  vse8.v         nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x0 vs3 6..0=0x27
+==============VECTOR - SCALAR==========================================
+3.  vadd.vx        [6]31..26=0x00 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // ADD
+4.  vsub.vx        [6]31..26=0x02 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SUB
+5.  vrsub.vx       [6]31..26=0x03 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // REVERSE SUB
+6.  vmin.vx        [6]31..26=0x05 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // MIN
+7.  vmax.vx        [6]31..26=0x07 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // MAX
+8.  vminu.vx       [6]31..26=0x04 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // MIN UNSIGN
+9.  vmaxu.vx       [6]31..26=0x06 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // MAX UNSIGN
+10. vand.vx        [6]31..26=0x09 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // AND
+11. vor.vx         [6]31..26=0x0a [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // OR
+12. vxor.vx        [6]31..26=0x0b [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // XOR
+13. vsadd.vx       [6]31..26=0x21 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // ADD SATURATION
+14. vsaddu.vx      [6]31..26=0x20 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // ADD SATURATION UNSIGN
+15. vssub.vx       [6]31..26=0x23 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SUB SATURATION
+16. vssubu.vx      [6]31..26=0x22 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SUB SATURATION UNSIGN
+17. vsmul.vx       [6]31..26=0x27 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // MULTIPLY
+18. vmslt.vx       [6]31..26=0x1b [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SET LESS THAN
+19. vmsltu.vx      [6]31..26=0x1a [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SET LESS THAN UNSIGN
+20. vsll.vx        [6]31..26=0x25 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SHIFT LEFT LOGIC
+21. vsrl.vx        [6]31..26=0x28 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SHIFT RIGHT LOGIC
+22. vsra.vx        [6]31..26=0x29 [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SHIFT RIGHT ARITH
+23. vssrl.vx       [6]31..26=0x2a [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SHIFT RIGHT LOGIC SCALING / DIV
+24. vssra.vx       [6]31..26=0x2b [1]vm [5]vs2 [5]rs1   [3]14..12=0x4 [5]vd [7]6..0=0x57   // SHIFT RIGHT ARITH SCALING / DIV
+==============VECTOR - VECTOR==========================================
+25. vadd.vv        [6]31..26=0x00 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // ADD
+26. vsub.vv        [6]31..26=0x02 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SUB
+27. vmin.vv        [6]31..26=0x05 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // MIN
+28. vminu.vv       [6]31..26=0x04 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // MIN UNSIGN
+29. vmax.vv        [6]31..26=0x07 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // MAX
+30. vmaxu.vv       [6]31..26=0x06 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // MAX UNSIGN
+31. vand.vv        [6]31..26=0x09 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // AND
+32. vor.vv         [6]31..26=0x0a [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // OR
+33. vxor.vv        [6]31..26=0x0b [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // XOR
+34. vmsltu.vv      [6]31..26=0x1a [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SET LESS THAN UNSIGN
+35. vmslt.vv       [6]31..26=0x1b [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SET LESS THAN
+36. vsadd.vv       [6]31..26=0x21 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // ADD SATURATION
+37. vsaddu.vv      [6]31..26=0x20 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // ADD SATURATION UNSIGN
+38. vssub.vv       [6]31..26=0x23 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SUB SATURATION
+39. vsmul.vv       [6]31..26=0x27 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // MULTIPLY
+40. vssubu.vv      [6]31..26=0x22 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SUB SATURATION UNSIGN
+41. vsll.vv        [6]31..26=0x25 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SHIFT LEFT LOGIC
+42. vsrl.vv        [6]31..26=0x28 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SHIFT RIGHT LOGIC
+43. vsra.vv        [6]31..26=0x29 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SHIFT RIGHT ARITH
+44. vssrl.vv       [6]31..26=0x2a [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SHIFT RIGHT LOGIC SCALING / DIV
+45. vssra.vv       [6]31..26=0x2b [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SHIFT RIGHT ARITH SCALING / DIV
+==============VECTOR - IMMEDIATE=======================================
+46. vadd.vi        [6]31..26=0x00 [1]vm [5]vs2 [5]simm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // ADD IMMEDIATE SIGN
+47. vrsub.vi       [6]31..26=0x03 [1]vm [5]vs2 [5]simm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // REVERSE SUB IMMEDIATE SIGN
+48. vand.vi        [6]31..26=0x09 [1]vm [5]vs2 [5]simm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // AND IMMEDIATE SIGN
+49. vor.vi         [6]31..26=0x0a [1]vm [5]vs2 [5]simm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // OR IMMEDIATE SIGN
+50. vxor.vi        [6]31..26=0x0b [1]vm [5]vs2 [5]simm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // XOR IMMEDIATE SIGN
+51. sadd.vi        [6]31..26=0x21 [1]vm [5]vs2 [5]simm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // ADD SATURATION IMMEDIATE SIGN
+52. vsaddu.vi      [6]31..26=0x20 [1]vm [5]vs2 [5]simm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // ADD SATURATION IMMEDIATE UNSIGN
+53. vsll.vi        [6]31..26=0x25 [1]vm [5]vs2 [5]zimm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // SHIFT LEFT LOGIC IMMEDIATE
+54. vsrl.vi        [6]31..26=0x28 [1]vm [5]vs2 [5]zimm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // SHIFT RIGHT LOGIC IMMEDIATE
+55. vsra.vi        [6]31..26=0x29 [1]vm [5]vs2 [5]zimm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // SHIFT RIGHT ARITH IMMEDIATE
+56. vssrl.vi       [6]31..26=0x2a [1]vm [5]vs2 [5]zimm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // SHIFT RIGHT LOGIC SCALING / DIV IMMEDIATE
+57. vssra.vi       [6]31..26=0x2b [1]vm [5]vs2 [5]zimm5 [3]14..12=0x3 [5]vd [7]6..0=0x57   // SHIFT RIGHT ARITH SCALING / DIV IMMEDIATE
+=============BROADCAST==================================================
+vmv.v.i        31..26=0x17 25=1 24..20=0 simm5 14..12=0x3 vd 6..0=0x57
+vmv.v.x        31..26=0x17 25=1 24..20=0 rs1   14..12=0x4 vd 6..0=0x57
+//////////////////////////////////////////////////////////////////////////////////////////////
+// masking
+vlm.v          31..28=0 27..26=0 25=1 24..20=0xb rs1 14..12=0x0  vd 6..0=0x07
+vsm.v          31..28=0 27..26=0 25=1 24..20=0xb rs1 14..12=0x0 vs3 6..0=0x27
+////////////
+// Unit-stride
+vle16.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x5  vd 6..0=0x07
+vle32.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x6  vd 6..0=0x07
+vle64.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x7  vd 6..0=0x07
+////////////
+// stride
+vse16.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x5 vs3 6..0=0x27
+vse32.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x6 vs3 6..0=0x27
+vse64.v        nf 28=0 27..26=0 vm 24..20=0 rs1 14..12=0x7 vs3 6..0=0x27
+////////////
+
+# Vector Strided Instructions (including segment part)
+# https://github.com/riscv/riscv-v-spec/blob/master/v-spec.adoc#75-vector-strided-instructions
+// stride
+vlse8.v         nf 28=0 27..26=2 vm rs2 rs1 14..12=0x0  vd 6..0=0x07
+vlse16.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x5  vd 6..0=0x07
+vlse32.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x6  vd 6..0=0x07
+vlse64.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x7  vd 6..0=0x07
+vsse8.v         nf 28=0 27..26=2 vm rs2 rs1 14..12=0x0 vs3 6..0=0x27
+vsse16.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x5 vs3 6..0=0x27
+vsse32.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x6 vs3 6..0=0x27
+vsse64.v        nf 28=0 27..26=2 vm rs2 rs1 14..12=0x7 vs3 6..0=0x27
+
+# OPIVX
+vrgather.vx    31..26=0x0c vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vslideup.vx    31..26=0x0e vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vslidedown.vx  31..26=0x0f vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vadc.vxm       31..26=0x10 25=0 vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmadc.vxm      31..26=0x11 25=0 vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmadc.vx       31..26=0x11 25=1 vs2 rs1 14..12=0x4 vd 6..0=0x57
+vsbc.vxm       31..26=0x12 25=0 vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmsbc.vxm      31..26=0x13 25=0 vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmsbc.vx       31..26=0x13 25=1 vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmerge.vxm     31..26=0x17 25=0 vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmseq.vx       31..26=0x18 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmsne.vx       31..26=0x19 vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmsleu.vx      31..26=0x1c vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmsle.vx       31..26=0x1d vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmsgtu.vx      31..26=0x1e vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vmsgt.vx       31..26=0x1f vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vnclipu.wx     31..26=0x2e vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+vnclip.wx      31..26=0x2f vm vs2 rs1 14..12=0x4 vd 6..0=0x57
+# OPIVV
+
+vrgather.vv     31..26=0x0c vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+vrgatherei16.vv 31..26=0x0e vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+
+vadc.vvm       31..26=0x10 25=0 vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmadc.vvm      31..26=0x11 25=0 vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmadc.vv       31..26=0x11 25=1 vs2 vs1 14..12=0x0 vd 6..0=0x57
+vsbc.vvm       31..26=0x12 25=0 vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmsbc.vvm      31..26=0x13 25=0 vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmsbc.vv       31..26=0x13 25=1 vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmerge.vvm     31..26=0x17 25=0 vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmv.v.v        31..26=0x17 25=1 24..20=0 vs1 14..12=0x0 vd 6..0=0x57
+vmseq.vv       31..26=0x18 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmsne.vv       31..26=0x19 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmsleu.vv      31..26=0x1c vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+vmsle.vv       31..26=0x1d vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+vnclipu.wv     31..26=0x2e vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+vnclip.wv      31..26=0x2f vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+vwredsumu.vs   31..26=0x30 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+vwredsum.vs    31..26=0x31 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
+
+# OPIVI
+vrgather.vi    31..26=0x0c vm vs2 zimm5 14..12=0x3 vd 6..0=0x57
+vslideup.vi    31..26=0x0e vm vs2 zimm5 14..12=0x3 vd 6..0=0x57
+vslidedown.vi  31..26=0x0f vm vs2 zimm5 14..12=0x3 vd 6..0=0x57
+vadc.vim       31..26=0x10 25=0 vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmadc.vim      31..26=0x11 25=0 vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmadc.vi       31..26=0x11 25=1 vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmerge.vim     31..26=0x17 25=0 vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmseq.vi       31..26=0x18 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmsne.vi       31..26=0x19 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmsleu.vi      31..26=0x1c vm vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmsle.vi       31..26=0x1d vm vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmsgtu.vi      31..26=0x1e vm vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmsgt.vi       31..26=0x1f vm vs2 simm5 14..12=0x3 vd 6..0=0x57
+vmv1r.v        31..26=0x27 25=1 vs2 19..15=0 14..12=0x3 vd 6..0=0x57
+vmv2r.v        31..26=0x27 25=1 vs2 19..15=1 14..12=0x3 vd 6..0=0x57
+vmv4r.v        31..26=0x27 25=1 vs2 19..15=3 14..12=0x3 vd 6..0=0x57
+vmv8r.v        31..26=0x27 25=1 vs2 19..15=7 14..12=0x3 vd 6..0=0x57
+
+# OPIWI
+vnsrl.wi       31..26=0x2c vm vs2 zimm5 14..12=0x3 vd 6..0=0x57
+vnsra.wi       31..26=0x2d vm vs2 zimm5 14..12=0x3 vd 6..0=0x57
+vnclipu.wi     31..26=0x2e vm vs2 zimm5 14..12=0x3 vd 6..0=0x57
+vnclip.wi      31..26=0x2f vm vs2 zimm5 14..12=0x3 vd 6..0=0x57
+
+# OPMVV
+vredsum.vs     31..26=0x00 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vredand.vs     31..26=0x01 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vredor.vs      31..26=0x02 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vredxor.vs     31..26=0x03 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vredminu.vs    31..26=0x04 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vredmin.vs     31..26=0x05 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vredmaxu.vs    31..26=0x06 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vredmax.vs     31..26=0x07 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vaaddu.vv      31..26=0x08 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vaadd.vv       31..26=0x09 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vasubu.vv      31..26=0x0a vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vasub.vv       31..26=0x0b vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+
+vmv.x.s        31..26=0x10 25=1 vs2 19..15=0 14..12=0x2 rd 6..0=0x57
+
+# Vector Integer Extension Instructions
+# https://github.com/riscv/riscv-v-spec/blob/e49574c92b072fd4d71e6cb20f7e8154de5b83fe/v-spec.adoc#123-vector-integer-extension
+vzext.vf8      31..26=0x12 vm vs2 19..15=2 14..12=0x2 vd 6..0=0x57
+vsext.vf8      31..26=0x12 vm vs2 19..15=3 14..12=0x2 vd 6..0=0x57
+vzext.vf4      31..26=0x12 vm vs2 19..15=4 14..12=0x2 vd 6..0=0x57
+vsext.vf4      31..26=0x12 vm vs2 19..15=5 14..12=0x2 vd 6..0=0x57
+vzext.vf2      31..26=0x12 vm vs2 19..15=6 14..12=0x2 vd 6..0=0x57
+vsext.vf2      31..26=0x12 vm vs2 19..15=7 14..12=0x2 vd 6..0=0x57
+
+vcompress.vm   31..26=0x17 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmandn.mm      31..26=0x18 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmand.mm       31..26=0x19 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmor.mm        31..26=0x1a 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmxor.mm       31..26=0x1b 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmorn.mm       31..26=0x1c 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmnand.mm      31..26=0x1d 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmnor.mm       31..26=0x1e 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmxnor.mm      31..26=0x1f 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
+
+vmsbf.m        31..26=0x14 vm vs2 19..15=0x01 14..12=0x2 vd 6..0=0x57
+vmsof.m        31..26=0x14 vm vs2 19..15=0x02 14..12=0x2 vd 6..0=0x57
+vmsif.m        31..26=0x14 vm vs2 19..15=0x03 14..12=0x2 vd 6..0=0x57
+viota.m        31..26=0x14 vm vs2 19..15=0x10 14..12=0x2 vd 6..0=0x57
+vid.v          31..26=0x14 vm 24..20=0 19..15=0x11 14..12=0x2 vd 6..0=0x57
+vcpop.m        31..26=0x10 vm vs2 19..15=0x10 14..12=0x2 rd 6..0=0x57
+vfirst.m       31..26=0x10 vm vs2 19..15=0x11 14..12=0x2 rd 6..0=0x57
+
+vdivu.vv       31..26=0x20 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vdiv.vv        31..26=0x21 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vremu.vv       31..26=0x22 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vrem.vv        31..26=0x23 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmulhu.vv      31..26=0x24 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmul.vv        31..26=0x25 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmulhsu.vv     31..26=0x26 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmulh.vv       31..26=0x27 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmadd.vv       31..26=0x29 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vnmsub.vv      31..26=0x2b vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vmacc.vv       31..26=0x2d vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vnmsac.vv      31..26=0x2f vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+
+vwaddu.vv      31..26=0x30 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwadd.vv       31..26=0x31 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwsubu.vv      31..26=0x32 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwsub.vv       31..26=0x33 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwaddu.wv      31..26=0x34 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwadd.wv       31..26=0x35 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwsubu.wv      31..26=0x36 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwsub.wv       31..26=0x37 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwmulu.vv      31..26=0x38 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwmulsu.vv     31..26=0x3a vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwmul.vv       31..26=0x3b vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwmaccu.vv     31..26=0x3c vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwmacc.vv      31..26=0x3d vm vs2 vs1 14..12=0x2 vd 6..0=0x57
+vwmaccsu.vv    31..26=0x3f vm vs2 vs1 14..12=0x2 vd 6..0=0x57
