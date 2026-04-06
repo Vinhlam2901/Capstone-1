@@ -83,13 +83,15 @@ module pipelined_fwd (
   reg  [1:0]   vrs2_forwarding_sel;
   reg  [63:0]  vs1_data;
   reg  [63:0]  vs2_data;
+  reg  [63:0]  vs3_data;
   reg  [63:0]  vop1;
   reg  [63:0]  vop2;
   reg  [63:0]  vimm_ex;
   reg  [63:0]  vop1_forward;
   reg  [63:0]  vop2_forward;
   reg  [63:0]  vrd_data_o;
-  reg  [63:0]  vector_read_data;
+  reg  [63:0]  read_data_vector;
+  reg  [63:0]  wr_data_vector;
   reg  [63:0]  wb_vdata_o;
   reg  [31:0]  mem           [0:8095];   //8kB
   //=================PIPELINE_REGISTER========================================================================================================================
@@ -241,12 +243,14 @@ hazard_detect hazard (
     .o_rs1_data (rs1_data                 ),
     .o_rs2_data (rs2_data                 )
   );
+  //=================VR2_SELECT==================================================================================================================================
+  assign vr2_sel = (if_id_reg.inst[`OPCODE] == VSTORE) ? if_id_reg.inst[`RD_ADDR] : if_id_reg.inst[`VS2_ADDR];
   //==================REGFILE============================================================================================================================
     vector_regfile vector_regfile (
       .i_clk       (i_clk                     ),
       .ni_rst      (i_reset                   ),
       .i_vrs1_addr (if_id_reg.inst[`VS1_ADDR] ),
-      .i_vrs2_addr (if_id_reg.inst[`VS2_ADDR] ),
+      .i_vrs2_addr (vr2_sel                   ),
       .i_vrd_addr  (mem_wb_reg.inst[`VRD_ADDR]),
       .i_vrd_data  (wb_vdata_o                ),
       .i_vrd_wren  (mem_wb_reg.vector_wren    ),
@@ -255,6 +259,9 @@ hazard_detect hazard (
       .o_vrs1_data (vs1_data                  ),
       .o_vrs2_data (vs2_data                  )
     );
+  always_comb begin
+    vs3_data = (if_id_reg.inst[`OPCODE] == VSTORE) ? vs2_data : 64'b0;
+  end
 //==================CONTROL_UNIT=========================================================================================================================
   control_unit  control_unit (
     .inst         (if_id_reg.inst),
@@ -290,10 +297,10 @@ hazard_detect hazard (
     .imm_o  (imm_ex        )
   );
   // ==================VECOR_IMMGEN==================================================================================================================================
-  // vector_immgen vector_immgen (
-  //   .inst_i (if_id_reg.inst),
-  //   .vimm_o  (vimm_ex        )
-  // );
+  vector_immgen vector_immgen (
+    .inst_i (if_id_reg.inst),
+    .vimm_o  (vimm_ex        )
+  );
 //==================EX_STAGE========================================================================================================================
   always_comb begin: input_ex_stage_reg
     id_ex_next.inst          = if_id_reg.inst;
@@ -305,6 +312,7 @@ hazard_detect hazard (
     // data vector 
     id_ex_next.vrs1_data     = vs1_data;
     id_ex_next.vrs2_data     = vs2_data;
+    id_ex_next.vrs3_data     = vs3_data;
     id_ex_next.vimm_ex       = vimm_ex;
     id_ex_next.vlen_set      = vlen_set;
     // addr scalar same with vector
@@ -358,7 +366,7 @@ hazard_detect hazard (
 //==================FORWARDING_MUX===========================================================================================================================
   always_comb begin : forwarding_mux
     if (ex_mem_reg.inst[`OPCODE] == IITYPE || ex_mem_reg.inst[`OPCODE] == IJTYPE) begin
-      mem_forward_data = pc4_wb;
+      mem_forward_data = mem_wb_reg.pc4;
     end else begin
       mem_forward_data = ex_mem_reg.alu_result;
     end
@@ -413,14 +421,14 @@ hazard_detect hazard (
   //==================VECTOR OPERATION_1_MUX===========================================================================================================================
     always_comb begin
       case (vop1_sel)
-        2'b00:   vop1 = {8{rs1_data[7:0]}}; // rs1 broadcasting
-        2'b01:   vop1 = vs1_data; 
-        2'b10:   vop1 = vimm_ex;            // imm5: Mở rộng dấu 5-bit thành 8-bit, rồi nhân bản 8 lần
+        2'b00:   vop1 = {8{op1_forward[7:0]}}; // rs1 broadcasting
+        2'b01:   vop1 = vop1_forward; 
+        2'b10:   vop1 = id_ex_reg.vimm_ex;            // imm5: Mở rộng dấu 5-bit thành 8-bit, rồi nhân bản 8 lần
         default: vop1 = 64'd0;
       endcase
     end
   //==================VECTOR OPERATION_2_MUX===========================================================================================================================
-    assign vop2 = vs2_data; 
+    assign vop2 = vop2_forward; 
   //==================VECTOR-ALU=====================================================================================================================================
     vector_alu vector_alu (
                             .i_vrs1_data   (vop1                  ),
@@ -474,6 +482,7 @@ hazard_detect hazard (
     ex_mem_next.alu_result    = rd_data_o;
     // data vector
     ex_mem_next.vrs2_data     = vop2_forward;
+    ex_mem_next.vrs3_data     = vs3_data;
     ex_mem_next.valu_result   = vrd_data_o;
     ex_mem_next.vlen_set      = vlen_set;
     // addr
@@ -518,37 +527,37 @@ hazard_detect hazard (
     wr_data_scalar = 32'b0;
     wr_data_vector = 64'b0; 
     if      (ex_mem_reg.inst[`OPCODE] == STYPE)  wr_data_scalar = ex_mem_reg.rs2_data;
-    else if (ex_mem_reg.inst[`OPCODE] == VSTORE) wr_data_vector = ex_mem_reg.vs3_data;
+    else if (ex_mem_reg.inst[`OPCODE] == VSTORE) wr_data_vector = ex_mem_reg.vrs3_data;  // vs3 is the data which address is vload[11:7]
   end
 
   lsu lsu (
-    .i_clk          (i_clk               ),
-    .i_reset        (i_reset             ),
-    .i_lsu_addr     (ex_mem_reg.alu_resul),
-    .i_scalar_stdata(wr_data_scalar      ),
-    .i_vector_stdata(wr_data_vector      ),
-    .i_vlen_en      (ex_mem_reg.vlen_enb ),
-    .i_scalar_wren  (ex_mem_reg.mems_wren),
-    .i_scalar_rden  (ex_mem_reg.mems_rden),
-    .i_vector_wren  (ex_mem_reg.memv_wren),
-    .i_vector_rden  (ex_mem_reg.memv_rden),
-    .i_inst         (ex_mem_reg.inst     ),
-    .i_io_sw        (i_io_sw             ),
-    .i_uart_rx      (i_uart_rx           ),
-    .o_io_hex0      (o_io_hex0           ),
-    .o_io_hex1      (o_io_hex1           ),
-    .o_io_hex2      (o_io_hex2           ),
-    .o_io_hex3      (o_io_hex3           ),
-    .o_io_hex4      (o_io_hex4           ),
-    .o_io_hex5      (o_io_hex5           ),
-    .o_io_hex6      (o_io_hex6           ),
-    .o_io_hex7      (o_io_hex7           ),
-    .o_uart_tx      (o_uart_tx           ),
-    .o_scalar_lddata(read_data_scalar    ),
-    .o_vector_lddata(vector_read_data    ),
-    .o_io_ledr      (o_io_ledr           ),
-    .o_io_ledg      (o_io_ledg           ),
-    .o_io_lcd       (o_io_lcd            )
+    .i_clk          (i_clk                ),
+    .i_reset        (i_reset              ),
+    .i_lsu_addr     (ex_mem_reg.alu_result),
+    .i_scalar_stdata(wr_data_scalar       ),
+    .i_vector_stdata(wr_data_vector       ),
+    .i_vlen_en      (ex_mem_reg.vlen_enb  ),
+    .i_scalar_wren  (ex_mem_reg.mems_wren ),
+    .i_scalar_rden  (ex_mem_reg.mems_rden ),
+    .i_vector_wren  (ex_mem_reg.memv_wren ),
+    .i_vector_rden  (ex_mem_reg.memv_rden ),
+    .i_inst         (ex_mem_reg.inst      ),
+    .i_io_sw        (i_io_sw              ),
+    .i_uart_rx      (i_uart_rx            ),
+    .o_io_hex0      (o_io_hex0            ),
+    .o_io_hex1      (o_io_hex1            ),
+    .o_io_hex2      (o_io_hex2            ),
+    .o_io_hex3      (o_io_hex3            ),
+    .o_io_hex4      (o_io_hex4            ),
+    .o_io_hex5      (o_io_hex5            ),
+    .o_io_hex6      (o_io_hex6            ),
+    .o_io_hex7      (o_io_hex7            ),
+    .o_uart_tx      (o_uart_tx            ),
+    .o_scalar_lddata(read_data_scalar     ),
+    .o_vector_lddata(read_data_vector     ),
+    .o_io_ledr      (o_io_ledr            ),
+    .o_io_ledg      (o_io_ledg            ),
+    .o_io_lcd       (o_io_lcd             )
   );
 
 //==================WB_STAGE========================================================================================================================
@@ -558,24 +567,26 @@ hazard_detect hazard (
     .pc_o  (pc4_wb)
   );
   always_comb begin: input_wb_stage_reg
-    mem_wb_next.inst          = ex_mem_reg.inst;
-    mem_wb_next.pc4           = pc4_wb;
+    mem_wb_next.inst             = ex_mem_reg.inst;
+    mem_wb_next.pc4              = pc4_wb;
     // data scalar
-    mem_wb_next.rs2_data      = ex_mem_reg.rs2_data;
-    mem_wb_next.alu_result    = ex_mem_reg.alu_result;
+    mem_wb_next.rs2_data         = ex_mem_reg.rs2_data;
+    mem_wb_next.alu_result       = ex_mem_reg.alu_result;
+    mem_wb_next.read_data_scalar = read_data_scalar;
     // data vector
-    mem_wb_next.valu_result   = ex_mem_reg.valu_result;
-    mem_wb_next.vrs2_data     = ex_mem_reg.vrs2_data;
-    mem_wb_next.vlen_set      = ex_mem_reg.vlen_set;
+    mem_wb_next.valu_result      = ex_mem_reg.valu_result;
+    mem_wb_next.vrs2_data        = ex_mem_reg.vrs2_data;
+    mem_wb_next.vlen_set         = ex_mem_reg.vlen_set;
+    mem_wb_next.read_data_vector = read_data_vector;
     // addr
-    mem_wb_next.rd_addr       = ex_mem_reg.inst[`RD_ADDR];
-    mem_wb_next.func3         = ex_mem_reg.inst[`FUNC3];
+    mem_wb_next.rd_addr          = ex_mem_reg.inst[`RD_ADDR];
+    mem_wb_next.func3            = ex_mem_reg.inst[`FUNC3];
     // signal control
-    mem_wb_next.scalar_wren   = ex_mem_reg.scalar_wren;
-    mem_wb_next.scalar_wb     = ex_mem_reg.scalar_wb;
-    mem_wb_next.vlen_enb      = ex_mem_reg.vlen_enb;
-    mem_wb_next.vector_wren   = ex_mem_reg.vector_wren;
-    mem_wb_next.vector_wb     = ex_mem_reg.vector_wb;
+    mem_wb_next.scalar_wren      = ex_mem_reg.scalar_wren;
+    mem_wb_next.scalar_wb        = ex_mem_reg.scalar_wb;
+    mem_wb_next.vlen_enb         = ex_mem_reg.vlen_enb;
+    mem_wb_next.vector_wren      = ex_mem_reg.vector_wren;
+    mem_wb_next.vector_wb        = ex_mem_reg.vector_wb;
   end
 
   always_ff @( posedge i_clk) begin : mem_wb_register
@@ -603,14 +614,14 @@ hazard_detect hazard (
     end else if (mem_wb_reg.inst[`OPCODE] == IITYPE || mem_wb_reg.inst[`OPCODE] == IJTYPE) begin
       wb_data_o = mem_wb_reg.pc4;
     end else if (mem_wb_reg.scalar_wb) begin
-      wb_data_o = read_data_scalar;
+      wb_data_o = mem_wb_reg.read_data_scalar;
     end else if (~mem_wb_reg.scalar_wb) begin
       wb_data_o = mem_wb_reg.alu_result;
     end
   end
 //==================VECTOR_WRITEBACK=============================================================================================================================
   always_comb begin : vector_write_back
-    if      (mem_wb_reg.vector_wb)  wb_vdata_o = vector_read_data; 
+    if      (mem_wb_reg.vector_wb)  wb_vdata_o = mem_wb_reg.read_data_vector; 
     else if (~mem_wb_reg.vector_wb) wb_vdata_o = mem_wb_reg.valu_result; 
   end
   pc_minus PC_wb_minus4 (

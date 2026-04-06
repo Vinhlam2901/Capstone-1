@@ -75,6 +75,7 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
     
     vector_t    vrs1_data;
     vector_t    vrs2_data; 
+    vector_t    vrs3_data; 
     vector_t    vimm_ex;
     vector_t    vlen_set;
 
@@ -115,6 +116,7 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
     vector_t    vlen_set;
     vector_t    vrs2_data; 
     vector_t    valu_result; 
+    vector_t    vrs3_data; 
 
     addr_t      rd_addr;
     addr_t      func3;
@@ -141,7 +143,8 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
     scalar_t    alu_result;
     scalar_t    rs2_data;
     scalar_t    inst;
-    scalar_t    read_data;
+    scalar_t    read_data_scalar;
+    vector_t    read_data_vector;
 
     vector_t    vrs2_data; 
     vector_t    vlen_set;
