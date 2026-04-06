@@ -4,50 +4,34 @@
 // File            : control_unit.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
 // Create date     : 12/12/2025
-// Updated date    : 04/03/2026
+// Updated date    : 30/03/2026
 //============================================================================================================
 import package_param::*;
 module control_unit (
   input  wire  [31:0] inst,
-  output reg          o_ctrl,
   output reg          br_unsign,
+  output reg          vector_enb,
   output reg          op1_sel,
   output reg          op2_sel,
   output reg          branch_signal,
   output reg          jmp_signal,
-  output reg          mem_to_reg,
+  output reg          scalar_wb,
   output reg  [3:0]   alu_opcode,
-  output reg          mem_rden,
-  output reg          rd_wren,
-  output reg          mem_wren
+  output reg          scalar_wren,
+  output reg          mems_rden,
+  output reg          mems_wren,
+  output reg          vector_wren,
+  output reg          memv_rden,
+  output reg          memv_wren
 );
 //===================================DECLARATION==================================================
   wire is_add, is_sub, is_and, is_or, is_xor, is_slt, is_sltu, is_sra, is_srl, is_sll, is_mul, is_mulh;
   wire is_addi, is_xori, is_ori, is_andi, is_slli, is_srli, is_srai, is_slti, is_sltiu;
   wire is_beq, is_bne, is_blt, is_bge, is_bltu, is_bgeu;
+  wire is_vsetvli;
   wire [11:0] rtype;
   wire [8:0]  itype;
   wire [5:0]  btype;
-//==========================RTYPE=========================================================================
-  always_comb begin : inst_valid
-    o_ctrl     = 1'b0;
-    case(inst[`OPCODE])
-      RTYPE,
-      ITYPE,
-      ILTYPE,
-      U1TYPE,
-      U2TYPE,
-      STYPE: o_ctrl = 1'b0;
-      BTYPE,
-      IJTYPE,
-      IITYPE: begin 
-        o_ctrl     = 1'b1;
-      end      
-      default: begin
-        o_ctrl = 1'b0;
-      end
-    endcase
-  end
 //==========================RTYPE=========================================================================
   //is_mul
   assign is_mul   = ~inst[12] & ~inst[13] & ~inst[14] & inst[25];
@@ -111,11 +95,21 @@ module control_unit (
   assign is_bgeu =  inst[12] & inst[13]  &  inst[14];
   // concat
   assign btype = {is_beq, is_bne, is_blt, is_bge, is_bltu, is_bgeu};
+  assign is_vsetvli = inst[12] & inst[13]  &  inst[14] & (inst[6:0] == VECTOR);
 //==========================alu_opcode=========================================================================
   always_comb begin : signal_sel
     br_unsign   = 1'b1;
-    mem_to_reg  = 1'b0;
-    case (inst[`OPCODE])
+    scalar_wb  = 1'b0;
+    vector_enb  = inst[6:0]   == VECTOR || inst[6:0] == VSTORE || inst[6:0] == VLOAD;
+    mems_wren   = inst[6:0]   == STYPE;
+    scalar_wren = ~(inst[6:0] == STYPE  || inst[6:0] == BTYPE  || (vector_enb && ~is_vsetvli));
+    vector_wren = vector_enb && ~(inst[6:0] == VSTORE) && ~is_vsetvli;
+    memv_rden   = vector_enb && inst[6:0] == VLOAD;
+    memv_wren   = vector_enb && inst[6:0] == VSTORE;
+    case (inst[`OPCODE])          
+      VECTOR: begin
+        op1_sel = 1'b0;
+      end          
       RTYPE: case (rtype)
               12'b100000000000 : alu_opcode = 4'b0000;  // add
               12'b010000000000 : alu_opcode = 4'b0001;  // sub
@@ -169,7 +163,7 @@ module control_unit (
                                br_unsign = 1'b0;
                 end
               6'b000010: begin
-                               alu_opcode = 4'b0000;         // bltu
+                               alu_opcode = 4'b0000;   // bltu
                                br_unsign  = 1'b1;
                 end
               6'b000001: begin
@@ -184,105 +178,85 @@ module control_unit (
       U2TYPE:                  alu_opcode = 4'b0000;         // auipc using pc + imm
       default:                 alu_opcode = 4'b0000;
     endcase
-//==================================WRITE_BACK===============================================
+//==================================SIGNAL===============================================
   case (inst[`OPCODE])
     RTYPE: begin                     // opcode rd, r1, r2
-      mem_to_reg    = 1'b0;  // alu_result
+      scalar_wb    = 1'b0;  // alu_result
       op1_sel       = 1'b0;  //rs1
       op2_sel       = 1'b0;  //rs2;
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b1;
+      mems_rden     = 1'b0;
       branch_signal = 1'b0;
       jmp_signal    = 1'b0;
     end
     ITYPE: begin
-      mem_to_reg    = 1'b0;  // alu_result
+      scalar_wb    = 1'b0;  // alu_result
       op1_sel       = 1'b0;  // rs1
       op2_sel       = 1'b1;  // imm
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b1;
+      mems_rden     = 1'b0;
       branch_signal = 1'b0;
       jmp_signal    = 1'b0;
     end
     ILTYPE: begin
-      mem_to_reg    = 1'b1;  // read_data
+      scalar_wb    = 1'b1;  // read_data
       op1_sel       = 1'b0;  // rs1
       op2_sel       = 1'b1;  // imm_ex;
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b1;
-      rd_wren       = 1'b1;
+      mems_rden     = 1'b1;
       branch_signal = 1'b0;
       jmp_signal    = 1'b0;
     end
     BTYPE: begin
-      mem_to_reg    = 1'b0;  // no access to wb
+      scalar_wb    = 1'b0;  // no access to wb
       op1_sel       = 1'b1;  // pc
       op2_sel       = 1'b1;  // imm
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b0;
+      mems_rden     = 1'b0;
       branch_signal = 1'b1;
       jmp_signal    = 1'b0;
     end
     STYPE: begin
-      mem_to_reg    = 1'b0;  // no access to wb
+      scalar_wb     = 1'b0;  // no access to wb
       op1_sel       = 1'b0;  // rs1
       op2_sel       = 1'b1;  // imm
-      mem_wren      = 1'b1;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b0;
+      mems_rden     = 1'b0;
       branch_signal = 1'b0;
       jmp_signal    = 1'b0;
     end
     IJTYPE: begin
-      mem_to_reg    = 1'b0;  // alu_result
+      scalar_wb    = 1'b0;  // alu_result
       op1_sel       = 1'b1;  // pc
       op2_sel       = 1'b1;  // imm
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b1;
+      mems_rden     = 1'b0;
       branch_signal = 1'b0;
       jmp_signal    = 1'b1;
     end
     IITYPE: begin
-      mem_to_reg    = 1'b0;  // alu_result
+      scalar_wb    = 1'b0;  // alu_result
       op1_sel       = 1'b0;  // rs1
       op2_sel       = 1'b1;  // imm
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b1;
+      mems_rden     = 1'b0;
       branch_signal = 1'b0;
       jmp_signal    = 1'b1;
     end
     U1TYPE: begin
-      mem_to_reg    = 1'b0;  // alu_result
+      scalar_wb    = 1'b0;  // alu_result
       op1_sel       = 1'b0;  // rs1
       op2_sel       = 1'b1;  // imm
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b1;
+      mems_rden     = 1'b0;
       branch_signal = 1'b0;
       jmp_signal    = 1'b0;
     end
     U2TYPE: begin
-      mem_to_reg    = 1'b0;  // alu_result
+      scalar_wb    = 1'b0;  // alu_result
       op1_sel       = 1'b1;  // pc
       op2_sel       = 1'b1;  // imm
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b1;
+      mems_rden     = 1'b0;
       branch_signal = 1'b0;
       jmp_signal    = 1'b0;
     end
     default: begin
-      mem_to_reg    = 1'b0;
+      scalar_wb    = 1'b0;
       op1_sel       = 1'b0;
       op2_sel       = 1'b0;
-      mem_wren      = 1'b0;
-      mem_rden      = 1'b0;
-      rd_wren       = 1'b0;
+      mems_rden     = 1'b0;
       branch_signal = 1'b0;
       jmp_signal    = 1'b0;
     end

@@ -15,7 +15,8 @@ module vector_regfile #(
     input  wire             ni_rst,
 
     input  wire             i_vrd_wren,
-    input  wire  [31:0]     vlen_set,       // 32bit with data equivalent to sew = 8
+    input  wire             vector_enb,
+    input  wire  [7:0]      vlen_enb,       // 32bit with data equivalent to sew = 8
     input  wire  [4:0]      i_vrs1_addr,
     input  wire  [4:0]      i_vrs2_addr,
     input  wire  [4:0]      i_vrd_addr,
@@ -34,32 +35,17 @@ module vector_regfile #(
   wire vrs1_bypass_sel;
   wire vrs2_bypass_sel;
 
+  wire           vrd_wren;
   wire [31:0]    enb_rows;
-  reg            enb_cells;
-  reg  [SEW-1:0] vlen_enb;
 
   genvar rows,lanes;
 
 //==================================INSTANTIATION====================================================================================================
   decoder_5to32 decode (.a_i(i_vrd_addr), .out_o(out_o));
-  always_comb begin
-    case (vlen_set)
-        32'd0:   vlen_enb = 8'b0000_0000;
-        32'd1:   vlen_enb = 8'b0000_0001;
-        32'd2:   vlen_enb = 8'b0000_0011;
-        32'd3:   vlen_enb = 8'b0000_0111;
-        32'd4:   vlen_enb = 8'b0000_1111;
-        32'd5:   vlen_enb = 8'b0001_1111;
-        32'd6:   vlen_enb = 8'b0011_1111;
-        32'd7:   vlen_enb = 8'b0111_1111;
-        32'd8:   vlen_enb = 8'b1111_1111; // MAXVL
-        default: vlen_enb = 8'b0000_0000;
-    endcase
-  end
-
+  assign vrd_wren = i_vrd_wren && vector_enb;
   generate 
     for (rows = 0; rows < 32; rows = rows + 1) begin: register_loop
-      assign enb_rows[rows] = i_vrd_wren && out_o[rows];            // define number of wire depends on number of loops
+      assign enb_rows[rows] = vrd_wren && out_o[rows];            // define number of wire depends on number of loops
         for (lanes = 0; lanes < 8; lanes = lanes + 1) begin
           wire enb_cells = enb_rows[rows] && vlen_enb[lanes];
           register_nbit #(.WIDTH(8)) reg_cells (

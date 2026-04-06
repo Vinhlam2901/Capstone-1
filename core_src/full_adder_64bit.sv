@@ -11,16 +11,16 @@ module full_adder_64bit (
   full_adder_32bit fa_low (
     .A_i   (A_i[31:0]),
     .Y_i   (Y_i[31:0]),
-    .C_i   (C_i),         // Nhận Carry đầu vào
-    .Sum_o (Sum_o[31:0]), // Ra kết quả 32 bit thấp
-    .c_o   (carry_mid)    // Xuất Carry sang tầng cao
+    .C_i   (C_i),
+    .Sum_o (Sum_o[31:0]), 
+    .c_o   (carry_mid)
   );
   full_adder_32bit fa_high (
     .A_i   (A_i[63:32]),
     .Y_i   (Y_i[63:32]),
-    .C_i   (carry_mid),   // Nhận Carry từ tầng thấp
-    .Sum_o (Sum_o[63:32]),// Ra kết quả 32 bit cao
-    .c_o   (C_o)          // Xuất Carry cuối cùng ra ngoài
+    .C_i   (carry_mid),
+    .Sum_o (Sum_o[63:32]),
+    .c_o   (C_o)
   );
 
 endmodule

@@ -9,9 +9,8 @@ package package_param;
    parameter U1TYPE = 7'b0110111;
    parameter U2TYPE = 7'b0010111;
    parameter VECTOR = 7'b1010111;
-   parameter VXTYPE = 3'b100;
-   parameter VVTYPE = 3'b000;
-   parameter VITYPE = 3'b011;
+   parameter VLOAD  = 7'b0000111;
+   parameter VSTORE = 7'b0100111;
 /*BAUDRATE: number of bit in 1s is [number_of_baud]
 f_fpga = CLK_FPGA
 f_baud = BAUD_x   (with x = 4800, 9600, 19200)
@@ -50,26 +49,38 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
    
    // Các trường dữ liệu đặc biệt của Vector
 //==================STRUCT=============================================================================================================
-  typedef logic [31:0] word_t;
+  typedef logic [31:0] scalar_t;
+  typedef logic [63:0] vector_t;
   typedef logic [4:0]  addr_t;
 
   typedef struct packed {
-    word_t pc;
-    word_t inst;
-    logic  o_insn_vld;
-    logic  pred_taken;
+    scalar_t pc;
+    scalar_t inst;
+
+    logic    o_insn_vld;
   } if_id_reg_t;
 
   typedef struct packed {
-    word_t      pc;
-    word_t      inst;
-    word_t      rs1_data;
-    word_t      rs2_data;
-    word_t      imm_ext;
+    scalar_t    pc;
+    scalar_t    inst;
+    scalar_t    rs1_data;
+    scalar_t    rs2_data;
+    scalar_t    imm_ex;
 
+    
     addr_t      rs1_addr;
     addr_t      rs2_addr;
     addr_t      rd_addr;
+    addr_t      func3;
+    
+    vector_t    vrs1_data;
+    vector_t    vrs2_data; 
+    vector_t    vimm_ex;
+    vector_t    vlen_set;
+
+    addr_t      vrs1_addr;
+    addr_t      vrs2_addr;
+    addr_t      vrd_addr;
 
     logic       o_insn_vld;
     logic       pred_taken;
@@ -77,44 +88,76 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
     logic       br_unsign;
     logic       op1_sel;
     logic       op2_sel;    // alu_src
-    logic       mem_wren;
-    logic       mem_rden;
+    logic       mems_wren;
+    logic       mems_rden;
     logic       branch_signal;
     logic       jmp_signal;
-    logic       rd_wren;
-    logic [1:0] mem_to_reg;
+    logic       scalar_wren;
+    logic       scalar_wb;
+
+    logic [3:0] valu_opcode;
+    logic       valu_unsign;
+    logic       vlen_enb;
+    logic       vector_enb;
+    logic       vop1_sel;
+    logic       memv_wren;
+    logic       memv_rden;
+    logic       vector_wren;
+    logic       vector_wb;
   } id_ex_reg_t;
 
   typedef struct packed {
-    word_t      pc;
-    word_t      inst;
-    word_t      alu_result;
-    word_t      rs2_data;
+    scalar_t    pc;
+    scalar_t    inst;
+    scalar_t    alu_result;
+    scalar_t    rs2_data;
+
+    vector_t    vlen_set;
+    vector_t    vrs2_data; 
+    vector_t    valu_result; 
 
     addr_t      rd_addr;
+    addr_t      func3;
+    addr_t      vrd_addr;
 
     logic       o_insn_vld;
-    logic       mem_wren;
-    logic       mem_rden;
+    logic       mems_wren;
+    logic       mems_rden;
     logic       branch_signal;
     logic       jmp_signal;
+    logic       scalar_wren;
+    logic       scalar_wb;
 
-    logic       rd_wren;
-    logic [1:0] mem_to_reg;
+    logic       vlen_enb;
+    logic       vector_enb;
+    logic       memv_wren;
+    logic       memv_rden;
+    logic       vector_wren;
+    logic       vector_wb;
   } ex_mem_reg_t;
 
   typedef struct packed {
-    word_t      pc4;
-    word_t      alu_result;
-    word_t      rs2_data;
-    word_t      inst;
-    word_t      read_data;
+    scalar_t    pc4;
+    scalar_t    alu_result;
+    scalar_t    rs2_data;
+    scalar_t    inst;
+    scalar_t    read_data;
 
+    vector_t    vrs2_data; 
+    vector_t    vlen_set;
+    scalar_t    valu_result;
+
+    addr_t      func3;
     addr_t      rd_addr;
-
+    addr_t      vrd_addr;
+    
     logic       o_insn_vld;   
-    logic       rd_wren;
-    logic [1:0] mem_to_reg;
+    logic       scalar_wren;
+    logic       scalar_wb;
+    logic       vector_wren;
+    logic       vector_enb;
+    logic       vlen_enb;
+    logic       vector_wb;
   } mem_wb_reg_t;
 // Register
 // LCR - Line Control Reg - Đây là thanh ghi "cài đặt cấu hình"
