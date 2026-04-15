@@ -46,7 +46,7 @@ module vector_regfile #(
   generate 
     for (rows = 0; rows < 32; rows = rows + 1) begin: register_loop
       assign enb_rows[rows] = vrd_wren && out_o[rows];            // define number of wire depends on number of loops
-        for (lanes = 0; lanes < 8; lanes = lanes + 1) begin
+        for (lanes = 0; lanes < 8; lanes = lanes + 1) begin: lane_loop
           wire enb_cells = enb_rows[rows] && vlen_enb[lanes];
           register_nbit #(.WIDTH(8)) reg_cells (
                                                 .i_clk (i_clk),

@@ -258,7 +258,7 @@ module pipelined_fwd (
   assign vr2_sel    = (if_id_reg.inst[`OPCODE] == VSTORE) ? if_id_reg.inst[`RD_ADDR] : if_id_reg.inst[`VS2_ADDR];
   assign ex_vr2_sel = (id_ex_reg.inst[`OPCODE] == VSTORE) ? id_ex_reg.inst[`RD_ADDR] : id_ex_reg.inst[`VS2_ADDR];
   //==================REGFILE============================================================================================================================
-    vector_regfile vector_regfile (
+    vector_regfile #(.SEW(8), .VLEN(64)) vector_regfile (
       .i_clk       (i_clk                     ),
       .ni_rst      (i_reset                   ),
       .i_vrs1_addr (if_id_reg.inst[`VS1_ADDR] ),
@@ -513,11 +513,12 @@ module pipelined_fwd (
     ex_mem_next.mems_wren     = id_ex_reg.mems_wren;
     ex_mem_next.mems_rden     = id_ex_reg.mems_rden;
     ex_mem_next.scalar_wren   = id_ex_reg.scalar_wren;
-    ex_mem_next.scalar_wb    = id_ex_reg.scalar_wb;
+    ex_mem_next.scalar_wb     = id_ex_reg.scalar_wb;
     // signal control vector
     ex_mem_next.memv_wren     = id_ex_reg.memv_wren;
     ex_mem_next.memv_rden     = id_ex_reg.memv_rden;
     ex_mem_next.vlen_enb      = id_ex_reg.vlen_enb;
+    ex_mem_next.vector_enb    = id_ex_reg.vector_enb;
     ex_mem_next.vector_wren   = id_ex_reg.vector_wren;
     ex_mem_next.vector_wb     = id_ex_reg.vector_wb;
   end
@@ -600,6 +601,7 @@ module pipelined_fwd (
     mem_wb_next.scalar_wren      = ex_mem_reg.scalar_wren;
     mem_wb_next.scalar_wb        = ex_mem_reg.scalar_wb;
     mem_wb_next.vlen_enb         = ex_mem_reg.vlen_enb;
+    mem_wb_next.vector_enb       = ex_mem_reg.vector_enb;
     mem_wb_next.vector_wren      = ex_mem_reg.vector_wren;
     mem_wb_next.vector_wb        = ex_mem_reg.vector_wb;
   end

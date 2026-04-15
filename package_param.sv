@@ -158,7 +158,7 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
     logic       scalar_wb;
     logic       vector_wren;
     logic       vector_enb;
-    logic       vlen_enb;
+    logic [7:0]  vlen_enb;
     logic       vector_wb;
   } mem_wb_reg_t;
 // Register
