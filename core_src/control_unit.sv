@@ -19,10 +19,7 @@ module control_unit (
   output reg  [3:0]   alu_opcode,
   output reg          scalar_wren,
   output reg          mems_rden,
-  output reg          mems_wren,
-  output reg          vector_wren,
-  output reg          memv_rden,
-  output reg          memv_wren
+  output reg          mems_wren
 );
 //===================================DECLARATION==================================================
   wire is_add, is_sub, is_and, is_or, is_xor, is_slt, is_sltu, is_sra, is_srl, is_sll, is_mul, is_mulh;
@@ -103,9 +100,6 @@ module control_unit (
     vector_enb  = inst[6:0]   == VECTOR || inst[6:0] == VSTORE || inst[6:0] == VLOAD;
     mems_wren   = inst[6:0]   == STYPE;
     scalar_wren = ~(inst[6:0] == STYPE  || inst[6:0] == BTYPE  || (vector_enb && ~is_vsetvli));
-    vector_wren = vector_enb && ~(inst[6:0] == VSTORE) && ~is_vsetvli;
-    memv_rden   = vector_enb && inst[6:0] == VLOAD;
-    memv_wren   = vector_enb && inst[6:0] == VSTORE;
     case (inst[`OPCODE])          
       VECTOR: begin
         op1_sel = 1'b0;
@@ -221,7 +215,8 @@ module control_unit (
       jmp_signal    = 1'b0;
     end
     IJTYPE: begin
-      scalar_wb    = 1'b0;  // alu_result
+      scalar_wren   = 1'b1;
+      scalar_wb     = 1'b0;  // alu_result
       op1_sel       = 1'b1;  // pc
       op2_sel       = 1'b1;  // imm
       mems_rden     = 1'b0;

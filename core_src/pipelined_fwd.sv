@@ -4,7 +4,7 @@
 // File            : pipelined_fwd.sv
 // Author          : Chau Tran Vinh Lam - vinhlamchautran572@gmail.com
 // Create date     : 12/12/2025
-// Updated date    : 01/04/2026
+// Updated date    : 12/04/2026
 //=============================================================================================================
 import package_param::*;
 module pipelined_fwd (
@@ -35,6 +35,7 @@ module pipelined_fwd (
   output reg         o_insn_vld
 );
 //==================Declaration=======================================================================================================
+  reg  [31:0]  mem               [0:2047];
   //------------SCALAR_SIGNAL------------------------------------
   reg          pc_src;
   reg  [3:0]   alu_op_io;
@@ -44,6 +45,7 @@ module pipelined_fwd (
   reg  [31:0]  pc_plus4;
   reg  [31:0]  pc_wb;
   reg  [31:0]  pc4_wb;
+  reg  [31:0]  pc4_ex;
   reg  [31:0]  pc_imm;
   reg  [31:0]  jmp_pc;
   wire         branch_signal;
@@ -74,13 +76,16 @@ module pipelined_fwd (
   reg  [31:0]  wr_data_scalar;
   reg  [31:0]  read_data_scalar;
   //------------VECTOR_SIGNAL------------------------------------
-  reg  [31:0]  vlen_set;
   wire         valu_unsign;
   wire         vector_wb;
+  reg  [7:0]   vlen_enb;
   reg  [3:0]   valu_opcode;
+  reg  [4:0]   vr2_sel;
+  reg  [4:0]   ex_vr2_sel;
   reg  [1:0]   vop1_sel;
   reg  [1:0]   vrs1_forwarding_sel;
   reg  [1:0]   vrs2_forwarding_sel;
+  reg  [31:0]  vlen_set;
   reg  [63:0]  vs1_data;
   reg  [63:0]  vs2_data;
   reg  [63:0]  vs3_data;
@@ -93,9 +98,9 @@ module pipelined_fwd (
   reg  [63:0]  read_data_vector;
   reg  [63:0]  wr_data_vector;
   reg  [63:0]  wb_vdata_o;
-  reg  [31:0]  mem           [0:8095];   //8kB
   //=================PIPELINE_REGISTER========================================================================================================================
-  if_id_reg_t  if_id_reg,  if_id_next;     // next: incoming data; reg: present data
+  // next: incoming data; reg: present data
+  if_id_reg_t  if_id_reg,  if_id_next;     
   id_ex_reg_t  id_ex_reg,  id_ex_next;
   ex_mem_reg_t ex_mem_reg, ex_mem_next;
   mem_wb_reg_t mem_wb_reg, mem_wb_next;
@@ -111,8 +116,9 @@ module pipelined_fwd (
 
   reg [63:0] vrs1_ex_debug;
   reg [63:0] vrs2_ex_debug;
+  reg [63:0] vrs3_ex_debug;
   reg [63:0] vimm_ex_debug;
-
+  reg [1:0] vop1sl_ex_debug;
 
   reg [31:0] inst_mem_debug;
   reg [31:0] pc_mem_debug;
@@ -121,6 +127,7 @@ module pipelined_fwd (
   
   reg [63:0] valu_mem_debug;
   reg [63:0] vrs2_mem_debug;
+  reg [7:0] vlen_mem_debug;
   
   reg [31:0] inst_wb_debug;
   reg [31:0] pc4_wb_debug;
@@ -128,7 +135,7 @@ module pipelined_fwd (
   reg [31:0] memdata_wb_debug;
 
   reg [63:0] valu_wb_debug;
-  
+  //----------CONTROL_SIGNAL--------------------------------------
   wire       flush;
   reg        vector_stall;
   reg        scalar_stall;
@@ -163,13 +170,14 @@ module pipelined_fwd (
   assign flush   = pc_src;
 //==================IMEM=============================================================================================================================
   initial begin : instruction
-    $readmemh("../01_tb/isa_4b.hex", mem);
+    $readmemh("../01_tb/code.hex", mem);
   end
 
   assign inst_if = mem[pc_if[31:2]];
   assign if_valid = 1'b1;
+
 //==================STALL_CONTROL===============================================================================================================================================================================================================
-hazard_detect hazard (
+  hazard_detect hazard (
                       .id_rs1_addr         (if_id_reg.inst[`RS1_ADDR] ),
                       .id_rs2_addr         (if_id_reg.inst[`RS2_ADDR] ),
                       .ex_rs1_addr         (id_ex_reg.inst[`RS1_ADDR] ),
@@ -181,10 +189,11 @@ hazard_detect hazard (
                       .wb_rd_addr          (mem_wb_reg.inst[`RD_ADDR] ), 
                       .wb_scalar_wren      (mem_wb_reg.scalar_wren    ),
                       .id_vrs1_addr        (if_id_reg.inst[`VS1_ADDR] ),
-                      .id_vrs2_addr        (if_id_reg.inst[`VS2_ADDR] ),
+                      .id_vrs2_addr        (vr2_sel                   ),
                       .ex_vrs1_addr        (id_ex_reg.inst[`VS1_ADDR] ),
-                      .ex_vrs2_addr        (id_ex_reg.inst[`VS2_ADDR] ),
+                      .ex_vrs2_addr        (ex_vr2_sel                ),
                       .ex_vrd_addr         (id_ex_reg.inst[`VRD_ADDR] ),
+                      .ex_mem_vrden        (id_ex_reg.memv_rden       ),
                       .mem_vrd_addr        (ex_mem_reg.inst[`VRD_ADDR]),
                       .mem_vector_wren     (ex_mem_reg.vector_wren    ),
                       .wb_vrd_addr         (mem_wb_reg.inst[`VRD_ADDR]),
@@ -196,6 +205,7 @@ hazard_detect hazard (
                       .vector_stall        (vector_stall              ),
                       .scalar_stall        (scalar_stall              )
                   );
+
 //==================REGISTER_ENB=================================================================================================================================
   always_comb begin : reg_enb
     if_reg_enb  = 1'b1;
@@ -243,8 +253,10 @@ hazard_detect hazard (
     .o_rs1_data (rs1_data                 ),
     .o_rs2_data (rs2_data                 )
   );
+
   //=================VR2_SELECT==================================================================================================================================
-  assign vr2_sel = (if_id_reg.inst[`OPCODE] == VSTORE) ? if_id_reg.inst[`RD_ADDR] : if_id_reg.inst[`VS2_ADDR];
+  assign vr2_sel    = (if_id_reg.inst[`OPCODE] == VSTORE) ? if_id_reg.inst[`RD_ADDR] : if_id_reg.inst[`VS2_ADDR];
+  assign ex_vr2_sel = (id_ex_reg.inst[`OPCODE] == VSTORE) ? id_ex_reg.inst[`RD_ADDR] : id_ex_reg.inst[`VS2_ADDR];
   //==================REGFILE============================================================================================================================
     vector_regfile vector_regfile (
       .i_clk       (i_clk                     ),
@@ -262,6 +274,7 @@ hazard_detect hazard (
   always_comb begin
     vs3_data = (if_id_reg.inst[`OPCODE] == VSTORE) ? vs2_data : 64'b0;
   end
+
 //==================CONTROL_UNIT=========================================================================================================================
   control_unit  control_unit (
     .inst         (if_id_reg.inst),
@@ -275,31 +288,71 @@ hazard_detect hazard (
     .alu_opcode   (alu_op_io     ),
     .scalar_wren  (scalar_wren   ),
     .mems_wren    (mems_wren     ),
-    .mems_rden    (mems_rden     ),
-    .vector_wren  (vector_wren   ),
-    .memv_wren    (memv_wren     ),
-    .memv_rden    (memv_rden     )
+    .mems_rden    (mems_rden     )
   );
+
   //==================VECTOR_CONTROL_UNIT=========================================================================================================================
     vector_control  vector_control (
+      .i_clk      (i_clk         ),
+      .ni_rst     (i_reset       ),
       .inst       (if_id_reg.inst),
       .vector_enb (vector_enb    ),
-      .vector_wb  (vector_wb    ),
+      .vector_wb  (vector_wb     ),
       .rs1_data   (rs1_data      ),
       .vlen_set   (vlen_set      ),
       .valu_unsign(valu_unsign   ),
       .vlen_enb   (vlen_enb      ),
-      .valu_opcode(valu_opcode   )
+      .vop1_sel   (vop1_sel      ),
+      .valu_opcode(valu_opcode   ),
+      .memv_wren  (memv_wren     ),
+      .vector_wren(vector_wren   ),
+      .memv_rden  (memv_rden     )
     );
+//==================BRCOMP=============================================================================================================================
+  brcomp branch_compare (
+    .i_rs1_data (rs1_data ),
+    .i_rs2_data (rs2_data ),
+    .i_br_un    (br_unsign),
+    .o_br_less  (br_less  ),
+    .o_br_equal (br_equal )
+  );
+ //==================PC_SRC=============================================================================================================================
+  always_comb begin : pc_src_check
+    case (if_id_reg.inst[`FUNC3])
+      3'b000: jmp_check =  br_equal;                           // beq
+      3'b001: jmp_check = ~br_equal;                           // bne
+      3'b100: jmp_check =  br_less;                            // blt
+      3'b101: jmp_check = ~br_less || br_equal;                // bge > or =
+      3'b110: jmp_check =  br_less && br_unsign;               // bltu
+      3'b111: jmp_check = (~br_less || br_equal) && br_unsign; // bgeu
+      default:jmp_check = 1'b0;
+    endcase
+    pc_src    = (jmp_check && branch_signal) || jmp_signal; // branch is condition jmp, jmp is unconditon so invert the condition
+    o_mispred = (branch_signal && jmp_check); 
+  end
+//==================PC_ADDER=====================================================================================================================================
+  pc_reg pc_adder_imm (
+    .pc_reg(if_id_reg.pc),
+    .op    (imm_ex      ),
+    .pc_o  (pc_imm      )
+
+  );
+  always_comb begin : jalr_case
+    if(id_ex_reg.inst[`OPCODE] == IITYPE) begin
+      jmp_pc = (rs1_data + imm_ex) & 32'hFFFFFFFE;    // pc = rs1 + imm
+    end else begin
+      jmp_pc = pc_imm;
+    end
+  end
 // ==================SCALAR_IMMGEN==================================================================================================================================
   immgen immgen (
     .inst_i (if_id_reg.inst),
     .imm_o  (imm_ex        )
   );
   // ==================VECOR_IMMGEN==================================================================================================================================
-  vector_immgen vector_immgen (
+  vector_immgen #(.SEW(8)) vector_immgen (
     .inst_i (if_id_reg.inst),
-    .vimm_o  (vimm_ex        )
+    .vimm_o (vimm_ex        )
   );
 //==================EX_STAGE========================================================================================================================
   always_comb begin: input_ex_stage_reg
@@ -327,8 +380,6 @@ hazard_detect hazard (
     id_ex_next.br_unsign     = br_unsign;
     id_ex_next.mems_wren     = mems_wren;
     id_ex_next.mems_rden     = mems_rden;
-    id_ex_next.branch_signal = branch_signal;
-    id_ex_next.jmp_signal    = jmp_signal;
     id_ex_next.scalar_wren   = scalar_wren;
     id_ex_next.scalar_wb     = scalar_wb;
     // signal control vector
@@ -340,12 +391,12 @@ hazard_detect hazard (
     id_ex_next.memv_wren     = memv_wren;
     id_ex_next.memv_rden     = memv_rden;
     id_ex_next.vector_wren   = vector_wren;
-    id_ex_next.vector_wb    = vector_wb;
+    id_ex_next.vector_wb     = vector_wb;
   end
 
   always_ff @( posedge i_clk ) begin : id_ex_register
     if(~i_reset || scalar_stall || flush || vector_stall) begin
-      id_ex_reg <= '0;
+      id_ex_reg   <= '0;
       id_ex_valid <= 1'b0;
     end else if (ex_reg_enb) begin
       id_ex_reg   <= id_ex_next;
@@ -359,17 +410,15 @@ hazard_detect hazard (
     rs1_ex_debug  = id_ex_reg.rs1_data;
     rs2_ex_debug  = id_ex_reg.rs2_data;
     imm_ex_debug  = id_ex_reg.imm_ex ;
-    vrs1_ex_debug  = id_ex_reg.vrs1_data;
-    vrs2_ex_debug  = id_ex_reg.vrs2_data;
-    vimm_ex_debug  = id_ex_reg.vimm_ex;
+    vrs1_ex_debug = id_ex_reg.vrs1_data;
+    vrs2_ex_debug = id_ex_reg.vrs2_data;
+    vrs3_ex_debug = id_ex_reg.vrs3_data;
+    vimm_ex_debug = id_ex_reg.vimm_ex;
+    vop1sl_ex_debug = id_ex_reg.vop1_sel;
   end
+
 //==================FORWARDING_MUX===========================================================================================================================
   always_comb begin : forwarding_mux
-    if (ex_mem_reg.inst[`OPCODE] == IITYPE || ex_mem_reg.inst[`OPCODE] == IJTYPE) begin
-      mem_forward_data = mem_wb_reg.pc4;
-    end else begin
-      mem_forward_data = ex_mem_reg.alu_result;
-    end
     if(id_ex_reg.inst[`OPCODE] == U1TYPE) begin
       rs1 = 32'b0;
     end else begin
@@ -390,6 +439,11 @@ hazard_detect hazard (
       default: op2_forward = 32'b0;
     endcase
   end
+  pc_reg PC_ex_plus4 (
+    .pc_reg(id_ex_reg.pc),
+    .op    (32'd4),
+    .pc_o  (pc4_ex)
+  );
 //==================OPERATION_1_MUX===========================================================================================================================
   assign op1 = (id_ex_reg.op1_sel) ? id_ex_reg.pc : op1_forward;
 //==================OPERATION_2_MUX===========================================================================================================================
@@ -402,8 +456,11 @@ hazard_detect hazard (
     .i_alu_op    (id_ex_reg.alu_opcode),
     .o_alu_data  (rd_data_o           )
   );
+  assign mem_forward_data = (id_ex_reg.inst[`OPCODE] == IITYPE || id_ex_reg.inst[`OPCODE] == IJTYPE) ? pc4_ex : rd_data_o;
   //==================VECTOR_FORWARDING_MUX===========================================================================================================================
     always_comb begin : vector_forwarding_mux
+      vop1_forward = 64'b0;
+      vop2_forward = 64'b0;
       case (vrs1_forwarding_sel)
         2'b00:   vop1_forward = id_ex_reg.vrs1_data;
         2'b01:   vop1_forward = wb_vdata_o; 
@@ -420,15 +477,15 @@ hazard_detect hazard (
     end
   //==================VECTOR OPERATION_1_MUX===========================================================================================================================
     always_comb begin
-      case (vop1_sel)
-        2'b00:   vop1 = {8{op1_forward[7:0]}}; // rs1 broadcasting
+      case (id_ex_reg.vop1_sel)
+        2'b00:   vop1 = {8{op1_forward[7:0]}};       // rs1 broadcasting
         2'b01:   vop1 = vop1_forward; 
         2'b10:   vop1 = id_ex_reg.vimm_ex;            // imm5: Mở rộng dấu 5-bit thành 8-bit, rồi nhân bản 8 lần
         default: vop1 = 64'd0;
       endcase
     end
   //==================VECTOR OPERATION_2_MUX===========================================================================================================================
-    assign vop2 = vop2_forward; 
+    assign vop2 = vop2_forward;   	     
   //==================VECTOR-ALU=====================================================================================================================================
     vector_alu vector_alu (
                             .i_vrs1_data   (vop1                  ),
@@ -437,42 +494,6 @@ hazard_detect hazard (
                             .i_valu_opcode (id_ex_reg.valu_opcode ),
                             .o_alu_result  (vrd_data_o             )
                           );
-//==================BRCOMP=============================================================================================================================
-  brcomp branch_compare (
-    .i_rs1_data (op1_forward        ),
-    .i_rs2_data (op2_forward        ),
-    .i_br_un    (id_ex_reg.br_unsign),
-    .o_br_less  (br_less            ),
-    .o_br_equal (br_equal           )
-  );
-//==================PC_SRC=============================================================================================================================
-  always_comb begin : pc_src_check
-    case (id_ex_reg.inst[`FUNC3])
-      3'b000: jmp_check =  br_equal;                         // beq
-      3'b001: jmp_check = ~br_equal;                         // bne
-      3'b100: jmp_check =  br_less;                          // blt
-      3'b101: jmp_check = ~br_less || br_equal;              // bge > or =
-      3'b110: jmp_check =  br_less && br_unsign;             // bltu
-      3'b111: jmp_check = (~br_less || br_equal) && br_unsign; // bgeu
-      default:jmp_check = 1'b0;
-    endcase
-    pc_src    = (jmp_check && id_ex_reg.branch_signal) || id_ex_reg.jmp_signal; // branch is condition jmp, jmp is unconditon so invert the condition
-    o_mispred = (id_ex_reg.branch_signal && jmp_check); 
-  end
-//==================PC_ADDER=====================================================================================================================================
-  pc_reg pc_adder_imm (
-    .pc_reg(id_ex_reg.pc),
-    .op    (id_ex_reg.imm_ex),
-    .pc_o  (pc_imm)
-
-  );
-  always_comb begin : jalr_case
-    if(id_ex_reg.inst[`OPCODE] == IITYPE) begin
-      jmp_pc = rd_data_o;    // pc = rs1 + imm
-    end else begin
-      jmp_pc = pc_imm;
-    end
-  end
 //==================MEM_STAGE========================================================================================================================
    always_comb begin: input_mem_stage_reg
     ex_mem_next.inst          = id_ex_reg.inst;
@@ -491,8 +512,6 @@ hazard_detect hazard (
     // signal control scalar
     ex_mem_next.mems_wren     = id_ex_reg.mems_wren;
     ex_mem_next.mems_rden     = id_ex_reg.mems_rden;
-    ex_mem_next.branch_signal = id_ex_reg.branch_signal;
-    ex_mem_next.jmp_signal    = id_ex_reg.jmp_signal;
     ex_mem_next.scalar_wren   = id_ex_reg.scalar_wren;
     ex_mem_next.scalar_wb    = id_ex_reg.scalar_wb;
     // signal control vector
@@ -520,6 +539,7 @@ hazard_detect hazard (
     alu_mem_debug  = ex_mem_reg.alu_result;
     vrs2_mem_debug = vop2_forward;
     valu_mem_debug = ex_mem_reg.valu_result;
+    vlen_mem_debug = ex_mem_reg.vlen_enb;
   end
 //==================LSU=====================================================================================================================================
   always_comb begin
@@ -527,7 +547,7 @@ hazard_detect hazard (
     wr_data_scalar = 32'b0;
     wr_data_vector = 64'b0; 
     if      (ex_mem_reg.inst[`OPCODE] == STYPE)  wr_data_scalar = ex_mem_reg.rs2_data;
-    else if (ex_mem_reg.inst[`OPCODE] == VSTORE) wr_data_vector = ex_mem_reg.vrs3_data;  // vs3 is the data which address is vload[11:7]
+    else if (ex_mem_reg.inst[`OPCODE] == VSTORE) wr_data_vector = ex_mem_reg.vrs2_data;  // vs3 is the data which address is vload[11:7]
   end
 
   lsu lsu (
@@ -561,14 +581,9 @@ hazard_detect hazard (
   );
 
 //==================WB_STAGE========================================================================================================================
-  pc_reg PC_wb_plus4 (
-    .pc_reg(ex_mem_reg.pc),
-    .op    (32'd4),
-    .pc_o  (pc4_wb)
-  );
   always_comb begin: input_wb_stage_reg
-    mem_wb_next.inst             = ex_mem_reg.inst;
-    mem_wb_next.pc4              = pc4_wb;
+   	mem_wb_next.inst             = ex_mem_reg.inst;
+		mem_wb_next.pc               = ex_mem_reg.pc;
     // data scalar
     mem_wb_next.rs2_data         = ex_mem_reg.rs2_data;
     mem_wb_next.alu_result       = ex_mem_reg.alu_result;
@@ -601,18 +616,16 @@ hazard_detect hazard (
 
   always_comb begin: mem_wb_debugger
     inst_wb_debug    = mem_wb_reg.inst;
-    pc4_wb_debug     = mem_wb_reg.pc4;
     alu_wb_debug     = mem_wb_reg.alu_result;
-    valu_wb_debug     = mem_wb_reg.valu_result;
+    valu_wb_debug    = mem_wb_reg.valu_result;
   end
 //==================SCALAR_WRITEBACK=============================================================================================================================
   always_comb begin : scalar_write_back
+    wb_data_o = 32'b0;
     if(mem_wb_reg.inst[`RD_ADDR] == 5'b00000) begin
       wb_data_o = 32'b0;
     end else if (mem_wb_reg.inst[6:0] == VECTOR && mem_wb_reg.inst[`FUNC3] == 3'b111) begin
       wb_data_o = mem_wb_reg.vlen_set;
-    end else if (mem_wb_reg.inst[`OPCODE] == IITYPE || mem_wb_reg.inst[`OPCODE] == IJTYPE) begin
-      wb_data_o = mem_wb_reg.pc4;
     end else if (mem_wb_reg.scalar_wb) begin
       wb_data_o = mem_wb_reg.read_data_scalar;
     end else if (~mem_wb_reg.scalar_wb) begin
@@ -621,15 +634,12 @@ hazard_detect hazard (
   end
 //==================VECTOR_WRITEBACK=============================================================================================================================
   always_comb begin : vector_write_back
+    wb_vdata_o = 64'b0;
     if      (mem_wb_reg.vector_wb)  wb_vdata_o = mem_wb_reg.read_data_vector; 
     else if (~mem_wb_reg.vector_wb) wb_vdata_o = mem_wb_reg.valu_result; 
   end
-  pc_minus PC_wb_minus4 (
-    .pc_reg(mem_wb_reg.pc4),
-    .op    (32'd4),
-    .pc_o  (pc_wb)
-  );
 
   assign o_insn_vld = mem_wb_valid;
-  assign o_pc_debug = (o_insn_vld) ? pc_wb : 32'b0;
+  assign o_pc_debug = (o_insn_vld) ? mem_wb_reg.pc : 32'b0;
+
 endmodule

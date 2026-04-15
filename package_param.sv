@@ -66,7 +66,6 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
     scalar_t    rs1_data;
     scalar_t    rs2_data;
     scalar_t    imm_ex;
-
     
     addr_t      rs1_addr;
     addr_t      rs2_addr;
@@ -98,9 +97,9 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
 
     logic [3:0] valu_opcode;
     logic       valu_unsign;
-    logic       vlen_enb;
+    logic [7:0] vlen_enb;
     logic       vector_enb;
-    logic       vop1_sel;
+    logic [1:0] vop1_sel;
     logic       memv_wren;
     logic       memv_rden;
     logic       vector_wren;
@@ -130,8 +129,8 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
     logic       scalar_wren;
     logic       scalar_wb;
 
-    logic       vlen_enb;
     logic       vector_enb;
+    logic [7:0] vlen_enb;
     logic       memv_wren;
     logic       memv_rden;
     logic       vector_wren;
@@ -139,7 +138,7 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
   } ex_mem_reg_t;
 
   typedef struct packed {
-    scalar_t    pc4;
+    scalar_t    pc;
     scalar_t    alu_result;
     scalar_t    rs2_data;
     scalar_t    inst;
@@ -148,7 +147,7 @@ counter = COUNTER_x = CLK_FPGA / BAUD_x
 
     vector_t    vrs2_data; 
     vector_t    vlen_set;
-    scalar_t    valu_result;
+    vector_t    valu_result;
 
     addr_t      func3;
     addr_t      rd_addr;

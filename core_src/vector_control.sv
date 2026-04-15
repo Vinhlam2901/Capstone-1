@@ -17,22 +17,29 @@ module vector_control (
 	output reg         vector_wb,
   output reg  [1:0]  vop1_sel,    // no need vs2 cuz it hardwire at [24:20]
   output reg  [31:0] vlen_set,
-  output reg  [31:0] vlen_enb,
-  output reg  [3:0]  valu_opcode
+  output reg  [7:0]  vlen_enb,
+  output reg  [3:0]  valu_opcode,
+  output reg         memv_rden,
+  output reg         vector_wren,
+  output reg         memv_wren
 );
 //========================DECLEARATION===============================================================================
   wire is_vx, vx_add, vx_sub, vx_rsub, vx_min, vx_max, vx_minu, vx_maxu, vx_and, vx_or, vx_xor, vx_sadd, vx_ssub, vx_ssubu, vx_saddu, vx_sll, vx_srl, vx_sra;
   wire is_vv, vv_add, vv_sub, vv_min, vv_max, vv_minu, vv_maxu, vv_and, vv_or, vv_xor, vv_sadd, vv_ssub, vv_ssubu, vv_saddu, vv_sll, vv_srl, vv_sra;
-  wire is_vi, vi_add, vi_and, vi_or, vi_xor, vi_sadd, vi_saddu, vi_sll, vi_srl, vi_sra, is_vsetvli;
+  wire is_vi, vi_add, vi_and, vi_or, vi_xor, vi_sadd, vi_saddu, vi_sll, vi_srl, vi_sra;
+  wire [31:0] vl_calc;
   reg  [31:0] vl_reg;
   reg  [31:0] vl_next;
   reg  [17:0] vxtype;
   reg  [16:0] vvtype;
   reg  [9:0]  vitype;
+  wire        is_vector_alu;
+  wire        is_vsetvli;
 
 //==========================VECTOR-SCALAR=========================================================================
+  assign is_vector_alu = (inst[6:0] == 7'b1010111);
   // func3 = 0x04 = 100
-  assign is_vx    = inst[14] & ~inst[13] & ~inst[12];
+  assign is_vx    = inst[14] & ~inst[13] & ~inst[12] && is_vector_alu;
   // func6 = 0x00
   assign vx_add   = is_vx & ~inst[26] & ~inst[27] & ~inst[28] & ~inst[29] & ~inst[31]; 
   // func6 = 0x02
@@ -71,7 +78,7 @@ module vector_control (
   assign vxtype   = {vx_add, vx_sub, vx_rsub, vx_minu, vx_min, vx_maxu, vx_max, vx_and, vx_or, vx_xor, vx_saddu, vx_sadd, vx_ssubu, vx_ssub, vx_sll, vx_srl, vx_sra};
 //==========================VECTOR-VECTOR=========================================================================
   // func3 = 0x04 = 000
-  assign is_vv    = ~inst[14] & ~inst[13] & ~inst[12];
+  assign is_vv    = ~inst[14] & ~inst[13] & ~inst[12] && is_vector_alu;
   // func6 = 0x00
   assign vv_add   = is_vv & ~inst[26] & ~inst[27] & ~inst[28] & ~inst[29] & ~inst[31]; 
   // func6 = 0x02
@@ -108,7 +115,7 @@ module vector_control (
   assign vvtype   = {vv_add, vv_sub, vv_minu, vv_min, vv_maxu, vv_max, vv_and, vv_or, vv_xor, vv_saddu, vv_sadd, vv_ssubu, vv_ssub, vv_sll, vv_srl, vv_sra};
 //==========================VECTOR-IMMEDIATE=========================================================================
   // func3 = 0x04 = 011
-  assign is_vi    = ~inst[14] & inst[13] & inst[12];
+  assign is_vi    = ~inst[14] & inst[13] & inst[12] && is_vector_alu;
   // func6 = 0x00
   assign vi_add   = is_vi & ~inst[26] & ~inst[27] & ~inst[28] & ~inst[29] & ~inst[31]; 
   // func6 = 0x03
@@ -132,7 +139,7 @@ module vector_control (
   // concatenation
   assign vitype   = {vi_add, vi_rsub, vi_and, vi_or, vi_xor, vi_saddu, vi_sadd, vi_sll, vi_srl, vi_sra};
   //========================VLEN_SET====================================================================================
-  assign is_vsetvli = inst[14] & inst[13] & inst[12];
+  assign is_vsetvli =  inst[14] &&  inst[13] &&  inst[12] && is_vector_alu;
 
   min_max  #(.WIDTH(32))  min_max       ( 
                                           .i_vrs1_data(32'd8),
@@ -141,9 +148,16 @@ module vector_control (
                                           .o_max      (),
                                           .o_maxu     (),
                                           .o_min      (),
-                                          .o_minu     (vl_next),
+                                          .o_minu     (vl_calc),
                                           .o_eq       ()
                                           );    
+  always_comb begin
+      if (inst[`RS1_ADDR] == 5'b00000) begin    // Nếu rs1 là thanh ghi x0
+          vl_next = 32'd8; // Ép lên MAXVL
+      end else begin
+          vl_next = vl_calc; // Nếu không thì lấy kết quả của hàm min
+      end
+  end
   always_ff @(posedge i_clk or negedge ni_rst) begin
       if (!ni_rst) begin
           vl_reg <= 32'd0;
@@ -172,6 +186,9 @@ module vector_control (
     valu_unsign = 1'b1;
     vop1_sel    = 2'b01;   // vs1
     vector_wb   = 1'b0;    // valu
+    vector_wren = 1'b0;    // valu
+    memv_rden   = 1'b0;    // valu
+    memv_wren   = 1'b0;    // valu
     if (vector_enb) begin 
       if (is_vx) begin
         unique case (vxtype)
@@ -291,19 +308,37 @@ module vector_control (
     end
     //==================================SIGNAL===============================================
     if(is_vsetvli) begin
+      vector_wren = 1'b0;
+      memv_rden   = 1'b0;
+      memv_wren   = 1'b0;
       valu_opcode = 4'd10;   // vv_minu  -> OP_MINU
       vop1_sel    = 2'b00;   // rs1
       valu_unsign = 1'b1;
-    end else if (vxtype) begin
+    end else if (is_vx) begin
+      vector_wren = 1'b1;
+      memv_wren   = 1'b0;
+      memv_rden   = 1'b0;
       vop1_sel    = 2'b00;   // rs1
-    end else if (vvtype) begin
+    end else if (is_vv) begin
+      vector_wren = 1'b1;
+      memv_wren   = 1'b0;
+      memv_rden   = 1'b0;
       vop1_sel    = 2'b01;   // vs1
-    end else if (vitype) begin
+    end else if (is_vi) begin
+      vector_wren = 1'b1;
+      memv_wren   = 1'b0;
+      memv_rden   = 1'b0;
       vop1_sel    = 2'b10;   // imm
     end else if (inst[6:0] == VLOAD) begin
+      vector_wren = 1'b1;
+      memv_wren   = 1'b0;
+      memv_rden   = 1'b1;
       vector_wb   = 1'b1;
       vop1_sel    = 2'b00;   // rs1
     end else if (inst[6:0] == VSTORE) begin
+      vector_wren = 1'b0;
+      memv_wren   = 1'b1;
+      memv_rden   = 1'b0;
       vector_wb   = 1'b0;
       vop1_sel    = 2'b00;   // rs1
     end

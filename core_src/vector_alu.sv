@@ -34,8 +34,8 @@ module vector_alu #(
       // cac vrs1, vrs2 nay se la cac data cua tung cell cua VRF
       // co 8 cells moi thanh ghi, nen se co 8 bo tinh toan 8 bit
       add_subtract #(.WIDTH(SEW)) sub_module (
-                                              .a_i     (vrs1_lanes),
-                                              .b_i     (vrs2_lanes),
+                                              .a_i     (vrs2_lanes),
+                                              .b_i     (vrs1_lanes),
                                               .cin_i   (sub_flag),
                                               .result_o(vrd_addsub[lanes*8 + 7: lanes*8]),
                                               .cout_o  ()

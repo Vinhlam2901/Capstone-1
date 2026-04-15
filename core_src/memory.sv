@@ -42,7 +42,7 @@ module memory (
 
   full_adder_32bit fa (
     .A_i(mem_addr        ),
-    .Y_i(32'd1           ),   //inc 4byte
+    .Y_i(32'd1           ),
     .C_i(1'b0            ),
     .Sum_o(mem_addr_plus1),
     .c_o(                )
@@ -109,8 +109,6 @@ module memory (
 
   always_ff @(posedge i_clk) begin : mem_align_store
     if (~i_reset) begin : reset
-      o_scalar_rdata <= 32'b0;
-      o_vector_rdata <= 64'b0;
       for(i = 0; i <= 1024; i = i + 1) begin
         mem[i] <= 64'b0;
       end
@@ -134,7 +132,7 @@ module memory (
       if (i_bmask_misalign[5]) mem[mem_addr_plus1][47:40] <= mem_st_misalign[47:40];
       if (i_bmask_misalign[6]) mem[mem_addr_plus1][55:48] <= mem_st_misalign[55:48];
       if (i_bmask_misalign[7]) mem[mem_addr_plus1][63:56] <= mem_st_misalign[63:56];
-    end 
+    end      
     if (i_vector_wren) begin
       case (i_vlen_en)
         8'b0000_0000: mem[mem_addr]        <= 64'b0; 
@@ -148,18 +146,23 @@ module memory (
         8'b1111_1111: mem[mem_addr][63:0]  <= i_vector_wdata[63:0];
         default:      mem[mem_addr]        <= i_vector_wdata;
       endcase                          
-    end else if (i_vector_rden) begin
+    end      
+  end
+  always_comb begin
+    o_vector_rdata = 64'b0;
+    o_scalar_rdata = 32'b0;
+    if (i_vector_rden) begin
       case (i_vlen_en)
-        8'b0000_0000: o_vector_rdata <= 64'b0;
-        8'b0000_0001: o_vector_rdata <= mem[mem_addr][7 :0];
-        8'b0000_0011: o_vector_rdata <= mem[mem_addr][15:0];
-        8'b0000_0111: o_vector_rdata <= mem[mem_addr][23:0]; 
-        8'b0000_1111: o_vector_rdata <= mem[mem_addr][31:0]; 
-        8'b0001_1111: o_vector_rdata <= mem[mem_addr][39:0];  
-        8'b0011_1111: o_vector_rdata <= mem[mem_addr][47:0];  
-        8'b0111_1111: o_vector_rdata <= mem[mem_addr][55:0];  
-        8'b1111_1111: o_vector_rdata <= mem[mem_addr][63:0];  
-        default:      o_vector_rdata <= 64'b0;
+        8'b0000_0000: o_vector_rdata = 64'b0;
+        8'b0000_0001: o_vector_rdata = mem[mem_addr][7 :0];
+        8'b0000_0011: o_vector_rdata = mem[mem_addr][15:0];
+        8'b0000_0111: o_vector_rdata = mem[mem_addr][23:0]; 
+        8'b0000_1111: o_vector_rdata = mem[mem_addr][31:0]; 
+        8'b0001_1111: o_vector_rdata = mem[mem_addr][39:0];  
+        8'b0011_1111: o_vector_rdata = mem[mem_addr][47:0];  
+        8'b0111_1111: o_vector_rdata = mem[mem_addr][55:0];  
+        8'b1111_1111: o_vector_rdata = mem[mem_addr][63:0];  
+        default:      o_vector_rdata = 64'b0;
       endcase              
     end else if (i_scalar_rden) begin
       if(~i_addr[2]) begin: highbyte_load
@@ -167,51 +170,51 @@ module memory (
         mem_ld_misalign = mem[mem_addr_plus1][31:0];
         if(is_word) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <=                         mem_ld_align;
-            2'b01:   o_scalar_rdata <= {mem_ld_misalign[ 7:0], mem_ld_align[31:8 ]};
-            2'b10:   o_scalar_rdata <= {mem_ld_misalign[15:0], mem_ld_align[31:16]};
-            2'b11:   o_scalar_rdata <= {mem_ld_misalign[23:0], mem_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata =                         mem_ld_align;
+            2'b01:   o_scalar_rdata = {mem_ld_misalign[ 7:0], mem_ld_align[31:8 ]};
+            2'b10:   o_scalar_rdata = {mem_ld_misalign[15:0], mem_ld_align[31:16]};
+            2'b11:   o_scalar_rdata = {mem_ld_misalign[23:0], mem_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end
         
         if(is_shb) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <= {{16{mem_ld_align[15]}}  ,                       mem_ld_align[15:0 ]};
-            2'b01:   o_scalar_rdata <= {{16{mem_ld_align[23]}}  ,                       mem_ld_align[23:8 ]};
-            2'b10:   o_scalar_rdata <= {{16{mem_ld_align[31]}}  ,                       mem_ld_align[31:16]};
-            2'b11:   o_scalar_rdata <= {{16{mem_ld_misalign[7]}}, mem_ld_misalign[7:0], mem_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata = {{16{mem_ld_align[15]}}  ,                       mem_ld_align[15:0 ]};
+            2'b01:   o_scalar_rdata = {{16{mem_ld_align[23]}}  ,                       mem_ld_align[23:8 ]};
+            2'b10:   o_scalar_rdata = {{16{mem_ld_align[31]}}  ,                       mem_ld_align[31:16]};
+            2'b11:   o_scalar_rdata = {{16{mem_ld_misalign[7]}}, mem_ld_misalign[7:0], mem_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end
 
         if(is_uhb) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <= {16'b0,                       mem_ld_align[15:0 ]};
-            2'b01:   o_scalar_rdata <= {16'b0,                       mem_ld_align[23:8 ]};
-            2'b10:   o_scalar_rdata <= {16'b0,                       mem_ld_align[31:16]};
-            2'b11:   o_scalar_rdata <= {16'b0, mem_ld_misalign[7:0], mem_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata = {16'b0,                       mem_ld_align[15:0 ]};
+            2'b01:   o_scalar_rdata = {16'b0,                       mem_ld_align[23:8 ]};
+            2'b10:   o_scalar_rdata = {16'b0,                       mem_ld_align[31:16]};
+            2'b11:   o_scalar_rdata = {16'b0, mem_ld_misalign[7:0], mem_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end
 
         if(is_sbyte) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <= {{24{mem_ld_align[7]}} , mem_ld_align[ 7:0 ]};
-            2'b01:   o_scalar_rdata <= {{24{mem_ld_align[15]}}, mem_ld_align[15:8 ]};
-            2'b10:   o_scalar_rdata <= {{24{mem_ld_align[23]}}, mem_ld_align[23:16]};
-            2'b11:   o_scalar_rdata <= {{24{mem_ld_align[31]}}, mem_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata = {{24{mem_ld_align[7]}} , mem_ld_align[ 7:0 ]};
+            2'b01:   o_scalar_rdata = {{24{mem_ld_align[15]}}, mem_ld_align[15:8 ]};
+            2'b10:   o_scalar_rdata = {{24{mem_ld_align[23]}}, mem_ld_align[23:16]};
+            2'b11:   o_scalar_rdata = {{24{mem_ld_align[31]}}, mem_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end
 
         if(is_ubyte) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <= {24'b0, mem_ld_align[ 7:0 ]};
-            2'b01:   o_scalar_rdata <= {24'b0, mem_ld_align[15:8 ]};
-            2'b10:   o_scalar_rdata <= {24'b0, mem_ld_align[23:16]};
-            2'b11:   o_scalar_rdata <= {24'b0, mem_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata = {24'b0, mem_ld_align[ 7:0 ]};
+            2'b01:   o_scalar_rdata = {24'b0, mem_ld_align[15:8 ]};
+            2'b10:   o_scalar_rdata = {24'b0, mem_ld_align[23:16]};
+            2'b11:   o_scalar_rdata = {24'b0, mem_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end 
       end else if (i_addr[2]) begin
@@ -219,54 +222,55 @@ module memory (
         mem_ld_misalign   = mem[mem_addr_plus1][31:0];
         if(is_word) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <=                         mem_high_ld_align;
-            2'b01:   o_scalar_rdata <= {mem_ld_misalign[ 7:0], mem_high_ld_align[31:8 ]};
-            2'b10:   o_scalar_rdata <= {mem_ld_misalign[15:0], mem_high_ld_align[31:16]};
-            2'b11:   o_scalar_rdata <= {mem_ld_misalign[23:0], mem_high_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata =                         mem_high_ld_align;
+            2'b01:   o_scalar_rdata = {mem_ld_misalign[ 7:0], mem_high_ld_align[31:8 ]};
+            2'b10:   o_scalar_rdata = {mem_ld_misalign[15:0], mem_high_ld_align[31:16]};
+            2'b11:   o_scalar_rdata = {mem_ld_misalign[23:0], mem_high_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end
         
         if(is_shb) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <= {{16{mem_high_ld_align[15]}}  ,                       mem_high_ld_align[15:0 ]};
-            2'b01:   o_scalar_rdata <= {{16{mem_high_ld_align[23]}}  ,                       mem_high_ld_align[23:8 ]};
-            2'b10:   o_scalar_rdata <= {{16{mem_high_ld_align[31]}}  ,                       mem_high_ld_align[31:16]};
-            2'b11:   o_scalar_rdata <= {{16{mem_ld_misalign[7]}}, mem_ld_misalign[7:0], mem_high_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata = {{16{mem_high_ld_align[15]}}  ,                       mem_high_ld_align[15:0 ]};
+            2'b01:   o_scalar_rdata = {{16{mem_high_ld_align[23]}}  ,                       mem_high_ld_align[23:8 ]};
+            2'b10:   o_scalar_rdata = {{16{mem_high_ld_align[31]}}  ,                       mem_high_ld_align[31:16]};
+            2'b11:   o_scalar_rdata = {{16{mem_ld_misalign[7]}}, mem_ld_misalign[7:0], mem_high_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end
 
         if(is_uhb) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <= {16'b0,                       mem_high_ld_align[15:0 ]};
-            2'b01:   o_scalar_rdata <= {16'b0,                       mem_high_ld_align[23:8 ]};
-            2'b10:   o_scalar_rdata <= {16'b0,                       mem_high_ld_align[31:16]};
-            2'b11:   o_scalar_rdata <= {16'b0, mem_ld_misalign[7:0], mem_high_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata = {16'b0,                       mem_high_ld_align[15:0 ]};
+            2'b01:   o_scalar_rdata = {16'b0,                       mem_high_ld_align[23:8 ]};
+            2'b10:   o_scalar_rdata = {16'b0,                       mem_high_ld_align[31:16]};
+            2'b11:   o_scalar_rdata = {16'b0, mem_ld_misalign[7:0], mem_high_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end
 
         if(is_sbyte) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <= {{24{mem_high_ld_align[7]}} , mem_high_ld_align[ 7:0 ]};
-            2'b01:   o_scalar_rdata <= {{24{mem_high_ld_align[15]}}, mem_high_ld_align[15:8 ]};
-            2'b10:   o_scalar_rdata <= {{24{mem_high_ld_align[23]}}, mem_high_ld_align[23:16]};
-            2'b11:   o_scalar_rdata <= {{24{mem_high_ld_align[31]}}, mem_high_ld_align[31:24]};
-            default: o_scalar_rdata <= 32'b0;
+            2'b00:   o_scalar_rdata = {{24{mem_high_ld_align[7]}} , mem_high_ld_align[ 7:0 ]};
+            2'b01:   o_scalar_rdata = {{24{mem_high_ld_align[15]}}, mem_high_ld_align[15:8 ]};
+            2'b10:   o_scalar_rdata = {{24{mem_high_ld_align[23]}}, mem_high_ld_align[23:16]};
+            2'b11:   o_scalar_rdata = {{24{mem_high_ld_align[31]}}, mem_high_ld_align[31:24]};
+            default: o_scalar_rdata = 32'b0;
           endcase
         end
 
         if(is_ubyte) begin
           case(i_addr[1:0])
-            2'b00:   o_scalar_rdata <= {24'b0, mem_high_ld_align[ 7:0 ]};
-            2'b01:   o_scalar_rdata <= {24'b0, mem_high_ld_align[15:8 ]};
-            2'b10:   o_scalar_rdata <= {24'b0, mem_high_ld_align[23:16]};
-            2'b11:   o_scalar_rdata <= {24'b0, mem_high_ld_align[31:24]};
-            default: o_scalar_rdata <=  32'b0;
+            2'b00:   o_scalar_rdata = {24'b0, mem_high_ld_align[ 7:0 ]};
+            2'b01:   o_scalar_rdata = {24'b0, mem_high_ld_align[15:8 ]};
+            2'b10:   o_scalar_rdata = {24'b0, mem_high_ld_align[23:16]};
+            2'b11:   o_scalar_rdata = {24'b0, mem_high_ld_align[31:24]};
+            default: o_scalar_rdata =  32'b0;
           endcase
         end
       end 
-    end              
+    end    
+    
   end
 endmodule

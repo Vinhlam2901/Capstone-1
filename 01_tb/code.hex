@@ -1,0 +1,7 @@
+000070D7    // vsetvli x1, x0, e8 # BẬT NGUỒN VECTOR! (vl = MAX, sew = 8)
+04000513    // addi x10, x0, 64   # Khởi tạo x10 = 0x40 (Con trỏ RAM)
+0207B0D7    // vadd.vi v1, v0, 15 # Nạp v1 = 0F0F0F0F0F0F0F0F
+020500A7    // vse8.v v1, (x10)   # GHI toàn bộ 64-bit của v1 xuống RAM
+020030D7    // vadd.vi v1, v0, 0  # XÓA v1 về 0
+02050107    // vle8.v v2, (x10)   # ĐỌC 64-bit từ RAM lên v2
+0000006F    // jal x0, 0          # KẾT THÚC

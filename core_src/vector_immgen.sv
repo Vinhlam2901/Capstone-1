@@ -14,12 +14,12 @@ module vector_immgen #(
 	output reg  [63:0] vimm_o
 );
 	always_comb begin
-		vimm_o = 64'b0;
-		if(inst_i[`OPCODE] == VECTOR) begin
-			if(inst_i[`FUNC3] == 3'b011) begin
-				vimm_o = {SEW{3{{inst_i[19]}, inst_i[19:15]}}};
-			end
-		end
-	end
+        vimm_o = 64'b0;
+        if(inst_i[`OPCODE] == VECTOR) begin
+            if(inst_i[`FUNC3] == 3'b011) begin
+                vimm_o = {8{ {3{inst_i[19]}}, inst_i[19:15] }};
+            end
+        end
+    end
 
 endmodule
