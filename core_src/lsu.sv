@@ -181,24 +181,27 @@
                   .o_scalar_rdata  (dmem_scalar    ),
                   .o_vector_rdata  (dmem_vector    )
                 );
-      
   always_comb begin : ld_data
-    mem_wren     = 1'b0;
-    scalar_wdata = i_scalar_stdata;
-    vector_wdata = i_vector_stdata;
+    mem_wren        = 1'b0;
+    scalar_wdata    = i_scalar_stdata;
+    vector_wdata    = i_vector_stdata;
+    o_scalar_lddata = 32'b0;
+    o_vector_lddata = 64'b0; 
     if (i_scalar_wren && is_dmem) begin
-      if   (bmask_align == 8'b0000_0000)  mem_wren = 1'b0;
-      else                                mem_wren = 1'b1;
+      if (bmask_align != 8'b0000_0000) mem_wren = 1'b1;
     end
     if (i_scalar_rden) begin
       if      (is_dmem) o_scalar_lddata = dmem_scalar;
       else if (is_sw)   o_scalar_lddata = i_io_sw;
       else if (is_uart) o_scalar_lddata = {{24{1'b0}}, uart_rdata};
-      else              o_scalar_lddata = 32'b0;
     end
-    if   (i_vector_rden) o_vector_lddata = dmem_vector;
-    else                 o_vector_lddata = 64'b0;
+
+    // 4. LOGIC ĐỌC VECTOR (LOAD 64-BIT)
+    if (i_vector_rden) begin
+      if      (is_dmem) o_vector_lddata = dmem_vector;
+      else if (is_uart) o_vector_lddata = uart_fifo_data_64; // <--- MỞ ĐƯỜNG CHO ẢNH TỪ UART VÀO VECTOR!
     end
+  end
 //=========================STORE=======================================
     always_ff @(posedge i_clk) begin: st_data
       if (~i_reset) begin
