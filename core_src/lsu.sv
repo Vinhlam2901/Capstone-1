@@ -61,6 +61,8 @@
 
     wire [7:0]  uart_rdata;
     wire [15:0] dmem_ptr;
+    wire        tx_ready;
+    wire        rx_ready;
 
     reg         is_sbyte;
     reg         is_ubyte;
@@ -148,21 +150,25 @@
     assign is_uart  = (i_lsu_addr[28] &&  i_lsu_addr[17]);                               // 0x1002 -> a[28] & a[17]
 
     uart_ip uart_dut (
-                      .i_clk (i_clk), 
-                      .ni_rst(i_reset),
-                      .i_data(i_scalar_stdata[7:0]), 
-                      .i_addr(i_lsu_addr[2:0]),
-                      .i_cs1 (is_uart), 
-                      .i_cs2 (1'b1), 
-                      .ni_cs3(1'b0),
-                      .i_ior (i_scalar_rden), 
-                      .ni_ior(~i_scalar_rden),
-                      .i_iow (i_scalar_wren), 
-                      .ni_iow(~i_scalar_wren),
-                      .o_data(uart_rdata), 
-                      .i_rxd (i_uart_rx), 
-                      .o_txd (o_uart_tx),
-                      .ni_cts(1'b0)
+                      .i_clk   (i_clk               ), 
+                      .ni_rst  (i_reset             ),
+                      .i_data  (i_scalar_stdata[7:0]), 
+                      .i_addr  (i_lsu_addr[2:0]     ),
+                      .i_cs1   (is_uart             ), 
+                      .i_cs2   (1'b1                ), 
+                      .ni_cs3  (1'b0                ),
+                      .i_ior   (i_scalar_rden       ), 
+                      .ni_ior  (~i_scalar_rden      ),
+                      .i_iow   (i_scalar_wren       ), 
+                      .ni_iow  (~i_scalar_wren      ),
+                      .o_data  (uart_rdata          ), 
+                      .i_rxd   (i_uart_rx           ), 
+                      .o_rxrdy (rx_ready            ),
+                      .no_rxrdy(~rx_ready           ),
+                      .o_txrdy (tx_ready            ),
+                      .no_txrdy(~tx_ready           ),
+                      .o_txd   (o_uart_tx           ),
+                      .ni_cts  (1'b0                )
                     );
     memory memory (
                   .i_clk           (i_clk          ),
@@ -195,11 +201,8 @@
       else if (is_sw)   o_scalar_lddata = i_io_sw;
       else if (is_uart) o_scalar_lddata = {{24{1'b0}}, uart_rdata};
     end
-
-    // 4. LOGIC ĐỌC VECTOR (LOAD 64-BIT)
-    if (i_vector_rden) begin
-      if      (is_dmem) o_vector_lddata = dmem_vector;
-      else if (is_uart) o_vector_lddata = uart_fifo_data_64; // <--- MỞ ĐƯỜNG CHO ẢNH TỪ UART VÀO VECTOR!
+    if (i_vector_rden && is_dmem) begin
+      o_vector_lddata = dmem_vector;
     end
   end
 //=========================STORE=======================================

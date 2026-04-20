@@ -141,8 +141,10 @@ module uart_ip (
   
   assign divisor      = {dlm_reg.msb_baud_div, dll_reg.lsb_baud_div};
 
+  assign o_rxrdy  = ~fifo_rx_empty; 
+  assign no_rxrdy =  fifo_rx_empty; 
   assign o_txrdy  = ~fifo_tx_full; 
-  assign no_txrdy = fifo_tx_full;  // Active Low
+  assign no_txrdy =  fifo_tx_full;  // Active Low
   
   assign lsr_wire.fifo_data_err = 1'b0;
   assign lsr_wire.tx_empty      = fifo_tx_empty && tx_done; // Bit 6: TEMT (Cả FIFO và Shift Reg rỗng)
