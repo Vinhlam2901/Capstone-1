@@ -12,16 +12,15 @@ module vector_control (
 	input  wire        ni_rst,
   input  wire [31:0] inst,
 	input  wire        vector_enb,
-  input  wire [31:0] rs1_data,
+	input  wire        is_vsetvli,
 	output reg         valu_unsign,
 	output reg         vector_wb,
   output reg  [1:0]  vop1_sel,    // no need vs2 cuz it hardwire at [24:20]
-  output reg  [31:0] vlen_set,
-  output reg  [7:0]  vlen_enb,
   output reg  [3:0]  valu_opcode,
   output reg         memv_rden,
   output reg         vector_wren,
   output reg         memv_wren
+
 );
 //========================DECLEARATION===============================================================================
   wire is_vx, vx_add, vx_sub, vx_rsub, vx_min, vx_max, vx_minu, vx_maxu, vx_and, vx_or, vx_xor, vx_sadd, vx_ssub, vx_ssubu, vx_saddu, vx_sll, vx_srl, vx_sra;
@@ -34,7 +33,6 @@ module vector_control (
   reg  [16:0] vvtype;
   reg  [9:0]  vitype;
   wire        is_vector_alu;
-  wire        is_vsetvli;
 
 //==========================VECTOR-SCALAR=========================================================================
   assign is_vector_alu = (inst[6:0] == 7'b1010111);
@@ -138,48 +136,6 @@ module vector_control (
   assign vi_sra   = is_vi &  inst[26] & ~inst[27] & ~inst[28] &  inst[29] &  inst[31]; 
   // concatenation
   assign vitype   = {vi_add, vi_rsub, vi_and, vi_or, vi_xor, vi_saddu, vi_sadd, vi_sll, vi_srl, vi_sra};
-  //========================VLEN_SET====================================================================================
-  assign is_vsetvli =  inst[14] &&  inst[13] &&  inst[12] && is_vector_alu;
-
-  min_max  #(.WIDTH(32))  min_max       ( 
-                                          .i_vrs1_data(32'd8),
-                                          .i_vrs2_data(rs1_data),
-                                          .i_cp_un    (1),
-                                          .o_max      (),
-                                          .o_maxu     (),
-                                          .o_min      (),
-                                          .o_minu     (vl_calc),
-                                          .o_eq       ()
-                                          );    
-  always_comb begin
-      if (inst[`RS1_ADDR] == 5'b00000) begin    // Nếu rs1 là thanh ghi x0
-          vl_next = 32'd8; // Ép lên MAXVL
-      end else begin
-          vl_next = vl_calc; // Nếu không thì lấy kết quả của hàm min
-      end
-  end
-  always_ff @(posedge i_clk or negedge ni_rst) begin
-      if (!ni_rst) begin
-          vl_reg <= 32'd0;
-      end else if (is_vsetvli) begin
-          vl_reg <= vl_next; 
-      end
-  end                                
-  assign vlen_set = vl_reg;
-  always_comb begin
-    case (vl_reg)
-        32'd0:   vlen_enb = 8'b0000_0000;
-        32'd1:   vlen_enb = 8'b0000_0001;
-        32'd2:   vlen_enb = 8'b0000_0011;
-        32'd3:   vlen_enb = 8'b0000_0111;
-        32'd4:   vlen_enb = 8'b0000_1111;
-        32'd5:   vlen_enb = 8'b0001_1111;
-        32'd6:   vlen_enb = 8'b0011_1111;
-        32'd7:   vlen_enb = 8'b0111_1111;
-        32'd8:   vlen_enb = 8'b1111_1111; // MAXVL
-        default: vlen_enb = 8'b0000_0000;
-    endcase
-  end
   //========================VECTOR OPCODE===============================================================================
   always_comb begin : inst_vector_decode
     valu_opcode = 4'b0000; 

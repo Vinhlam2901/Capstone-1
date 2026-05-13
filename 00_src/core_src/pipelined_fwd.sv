@@ -35,7 +35,7 @@ module pipelined_fwd (
   output reg         o_insn_vld
 );
 //==================Declaration=======================================================================================================
-  reg  [31:0]  mem               [0:2047];
+  reg  [31:0]  imem               [0:50];
   //------------SCALAR_SIGNAL------------------------------------
   reg          pc_src;
   reg  [3:0]   alu_op_io;
@@ -60,6 +60,7 @@ module pipelined_fwd (
   wire         br_equal;
   wire         op2_sel;
   wire         op1_sel;
+  wire [31:0] raw_inst;
   reg  [1:0]   rs1_forwarding_sel;
   reg  [1:0]   rs2_forwarding_sel;
   reg  [31:0]  rs1_data;
@@ -127,12 +128,18 @@ module pipelined_fwd (
   
   reg [63:0] valu_mem_debug;
   reg [63:0] vrs2_mem_debug;
-  reg [7:0] vlen_mem_debug;
+  reg [7:0]  vlen_mem_debug;
+  reg [7:0]  vlen_ex_debug;
+  reg [7:0]  vlen_wb_debug;
+  reg        scalar_wren_wb_debug;
+  reg        vector_wren_ex_debug;
+  reg        vector_wren_mem_debug;
   
   reg [31:0] inst_wb_debug;
   reg [31:0] pc4_wb_debug;
   reg [31:0] alu_wb_debug;
-  reg [31:0] memdata_wb_debug;
+  reg [63:0] memdata_wb_debug;
+  reg [31:0] rs2_debug;
 
   reg [63:0] valu_wb_debug;
   //----------CONTROL_SIGNAL--------------------------------------
@@ -170,10 +177,10 @@ module pipelined_fwd (
   assign flush   = pc_src;
 //==================IMEM=============================================================================================================================
   initial begin : instruction
-    $readmemh("../01_tb/code.hex", mem);
+    $readmemh("../02_sim/init_imem.hex", imem);
   end
-
-  assign inst_if = mem[pc_if[31:2]];
+  assign raw_inst = imem[pc_if[31:2]];
+  assign inst_if = {raw_inst[7:0], raw_inst[15:8], raw_inst[23:16], raw_inst[31:24]};
   assign if_valid = 1'b1;
 
 //==================STALL_CONTROL===============================================================================================================================================================================================================
@@ -277,31 +284,33 @@ module pipelined_fwd (
 
 //==================CONTROL_UNIT=========================================================================================================================
   control_unit  control_unit (
+    .i_clk        (i_clk         ),
+    .ni_rst       (i_reset       ),
     .inst         (if_id_reg.inst),
     .br_unsign    (br_unsign     ),
     .vector_enb   (vector_enb    ),
     .op1_sel      (op1_sel       ),
     .op2_sel      (op2_sel       ),
     .branch_signal(branch_signal ),
+    .rs1_data     (op1_forward    ),
     .jmp_signal   (jmp_signal    ),
-    .scalar_wb    (scalar_wb    ),
+    .scalar_wb    (scalar_wb     ),
     .alu_opcode   (alu_op_io     ),
     .scalar_wren  (scalar_wren   ),
     .mems_wren    (mems_wren     ),
-    .mems_rden    (mems_rden     )
+    .mems_rden    (mems_rden     ),
+    .is_vsetvli   (is_vsetvli    ),
+    .vlen_set     (vlen_set      ),
+    .vlen_enb     (vlen_enb      )    
   );
 
   //==================VECTOR_CONTROL_UNIT=========================================================================================================================
     vector_control  vector_control (
-      .i_clk      (i_clk         ),
-      .ni_rst     (i_reset       ),
       .inst       (if_id_reg.inst),
       .vector_enb (vector_enb    ),
       .vector_wb  (vector_wb     ),
-      .rs1_data   (rs1_data      ),
-      .vlen_set   (vlen_set      ),
+      .is_vsetvli (is_vsetvli     ),
       .valu_unsign(valu_unsign   ),
-      .vlen_enb   (vlen_enb      ),
       .vop1_sel   (vop1_sel      ),
       .valu_opcode(valu_opcode   ),
       .memv_wren  (memv_wren     ),
@@ -310,26 +319,12 @@ module pipelined_fwd (
     );
 //==================BRCOMP=============================================================================================================================
   brcomp branch_compare (
-    .i_rs1_data (rs1_data ),
-    .i_rs2_data (rs2_data ),
+    .i_rs1_data (op1_forward ),
+    .i_rs2_data (op2_forward ),
     .i_br_un    (br_unsign),
     .o_br_less  (br_less  ),
     .o_br_equal (br_equal )
   );
- //==================PC_SRC=============================================================================================================================
-  always_comb begin : pc_src_check
-    case (if_id_reg.inst[`FUNC3])
-      3'b000: jmp_check =  br_equal;                           // beq
-      3'b001: jmp_check = ~br_equal;                           // bne
-      3'b100: jmp_check =  br_less;                            // blt
-      3'b101: jmp_check = ~br_less || br_equal;                // bge > or =
-      3'b110: jmp_check =  br_less && br_unsign;               // bltu
-      3'b111: jmp_check = (~br_less || br_equal) && br_unsign; // bgeu
-      default:jmp_check = 1'b0;
-    endcase
-    pc_src    = (jmp_check && branch_signal) || jmp_signal; // branch is condition jmp, jmp is unconditon so invert the condition
-    o_mispred = (branch_signal && jmp_check); 
-  end
 //==================PC_ADDER=====================================================================================================================================
   pc_reg pc_adder_imm (
     .pc_reg(if_id_reg.pc),
@@ -338,10 +333,15 @@ module pipelined_fwd (
 
   );
   always_comb begin : jalr_case
-    if(id_ex_reg.inst[`OPCODE] == IITYPE) begin
-      jmp_pc = (rs1_data + imm_ex) & 32'hFFFFFFFE;    // pc = rs1 + imm
-    end else begin
-      jmp_pc = pc_imm;
+    // Dành riêng cho JALR (vì nó cộng rs1 với imm)
+    // Lưu ý: Đảm bảo rs1_data ở đây phải là dữ liệu đã FORWARD nhé (op1_forward)!
+    if(id_ex_reg.inst[`OPCODE] == 7'b1100111) begin // Opcode của JALR
+      jmp_pc = (op1_forward + imm_ex) & 32'hFFFFFFFE; 
+    end 
+    // Dành cho B-Type (Branch) và J-Type (JAL)
+    else begin
+      // Lấy đích đến đã được ALU tính toán sẵn cực kỳ chuẩn xác!
+      jmp_pc = rd_data_o; 
     end
   end
 // ==================SCALAR_IMMGEN==================================================================================================================================
@@ -378,6 +378,8 @@ module pipelined_fwd (
     id_ex_next.op1_sel       = op1_sel;
     id_ex_next.op2_sel       = op2_sel;
     id_ex_next.br_unsign     = br_unsign;
+    id_ex_next.branch_signal = branch_signal;
+    id_ex_next.jmp_signal    = jmp_signal;
     id_ex_next.mems_wren     = mems_wren;
     id_ex_next.mems_rden     = mems_rden;
     id_ex_next.scalar_wren   = scalar_wren;
@@ -385,6 +387,7 @@ module pipelined_fwd (
     // signal control vector
     id_ex_next.valu_opcode   = valu_opcode;
     id_ex_next.vlen_enb      = vlen_enb;
+    id_ex_next.vlen_set      = vlen_set;
     id_ex_next.vector_enb    = vector_enb;
     id_ex_next.vop1_sel      = vop1_sel; // bug here
     id_ex_next.valu_unsign   = valu_unsign;
@@ -406,7 +409,7 @@ module pipelined_fwd (
 
   always_comb begin: id_ex_debug
     inst_ex_debug = id_ex_reg.inst;
-    pc_ex_debug   = id_ex_reg.pc;
+    pc_ex_debug   = id_ex_reg.branch_signal;
     rs1_ex_debug  = id_ex_reg.rs1_data;
     rs2_ex_debug  = id_ex_reg.rs2_data;
     imm_ex_debug  = id_ex_reg.imm_ex ;
@@ -415,8 +418,23 @@ module pipelined_fwd (
     vrs3_ex_debug = id_ex_reg.vrs3_data;
     vimm_ex_debug = id_ex_reg.vimm_ex;
     vop1sl_ex_debug = id_ex_reg.vop1_sel;
+    vlen_ex_debug = id_ex_reg.vlen_set;
+    vector_wren_ex_debug = id_ex_reg.vector_wb;
   end
-
+ //==================PC_SRC=============================================================================================================================
+  always_comb begin : pc_src_check
+    case (id_ex_reg.inst[`FUNC3])
+      3'b000: jmp_check =  br_equal;                           // beq
+      3'b001: jmp_check = ~br_equal;                           // bne
+      3'b100: jmp_check =  br_less;                            // blt
+      3'b101: jmp_check = ~br_less || br_equal;                // bge > or =
+      3'b110: jmp_check =  br_less && br_unsign;               // bltu
+      3'b111: jmp_check = (~br_less || br_equal) && br_unsign; // bgeu
+      default:jmp_check = 1'b0;
+    endcase
+    pc_src    = (jmp_check && id_ex_reg.branch_signal) | id_ex_reg.jmp_signal; // branch is condition jmp, jmp is unconditon so invert the condition
+    o_mispred = pc_src; 
+  end
 //==================FORWARDING_MUX===========================================================================================================================
   always_comb begin : forwarding_mux
     if(id_ex_reg.inst[`OPCODE] == U1TYPE) begin
@@ -429,16 +447,16 @@ module pipelined_fwd (
       2'b00:   op1_forward = rs1;
       2'b01:   op1_forward = wb_data_o; 
       2'b10:   op1_forward = mem_forward_data;
-      default: op1_forward = 32'b0;
+      default: op1_forward = 32'bx;
     endcase
 
     case (rs2_forwarding_sel)
       2'b00:   op2_forward = id_ex_reg.rs2_data;
       2'b01:   op2_forward = wb_data_o; 
       2'b10:   op2_forward = mem_forward_data;
-      default: op2_forward = 32'b0;
+      default: op2_forward = 32'bx;
     endcase
-  end
+  end 
   pc_reg PC_ex_plus4 (
     .pc_reg(id_ex_reg.pc),
     .op    (32'd4),
@@ -456,7 +474,7 @@ module pipelined_fwd (
     .i_alu_op    (id_ex_reg.alu_opcode),
     .o_alu_data  (rd_data_o           )
   );
-  assign mem_forward_data = (id_ex_reg.inst[`OPCODE] == IITYPE || id_ex_reg.inst[`OPCODE] == IJTYPE) ? pc4_ex : rd_data_o;
+  assign mem_forward_data = (id_ex_reg.inst[`OPCODE] == IITYPE || id_ex_reg.inst[`OPCODE] == IJTYPE) ? pc4_ex : ex_mem_reg.alu_result;
   //==================VECTOR_FORWARDING_MUX===========================================================================================================================
     always_comb begin : vector_forwarding_mux
       vop1_forward = 64'b0;
@@ -505,7 +523,7 @@ module pipelined_fwd (
     ex_mem_next.vrs2_data     = vop2_forward;
     ex_mem_next.vrs3_data     = vs3_data;
     ex_mem_next.valu_result   = vrd_data_o;
-    ex_mem_next.vlen_set      = vlen_set;
+    ex_mem_next.vlen_set      = id_ex_reg.vlen_set;
     // addr
     ex_mem_next.rd_addr       = id_ex_reg.inst[`RD_ADDR];
     ex_mem_next.func3         = id_ex_reg.inst[`FUNC3];
@@ -541,6 +559,7 @@ module pipelined_fwd (
     vrs2_mem_debug = vop2_forward;
     valu_mem_debug = ex_mem_reg.valu_result;
     vlen_mem_debug = ex_mem_reg.vlen_enb;
+    vector_wren_mem_debug = ex_mem_reg.vector_wb;
   end
 //==================LSU=====================================================================================================================================
   always_comb begin
@@ -620,6 +639,10 @@ module pipelined_fwd (
     inst_wb_debug    = mem_wb_reg.inst;
     alu_wb_debug     = mem_wb_reg.alu_result;
     valu_wb_debug    = mem_wb_reg.valu_result;
+    rs2_debug        = mem_wb_reg.rs2_data;
+    vlen_wb_debug    = mem_wb_reg.vlen_enb;
+    scalar_wren_wb_debug    = mem_wb_reg.vector_wb;
+    memdata_wb_debug    = mem_wb_reg.read_data_vector;
   end
 //==================SCALAR_WRITEBACK=============================================================================================================================
   always_comb begin : scalar_write_back

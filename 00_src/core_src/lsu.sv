@@ -61,8 +61,6 @@
 
     wire [7:0]  uart_rdata;
     wire [15:0] dmem_ptr;
-    wire        tx_ready;
-    wire        rx_ready;
 
     reg         is_sbyte;
     reg         is_ubyte;
@@ -137,8 +135,8 @@
 
     assign dmem_ptr =  i_lsu_addr[15:0];
     assign is_dmem  = ~i_lsu_addr[28];                                                  // 0x0000 -> bit 28 == 0
-    assign is_out   = (i_lsu_addr[28] && ~i_lsu_addr[16]);                              // 0x1000 -> a[28] & ~a[16]
-    assign is_in    = (i_lsu_addr[28] &&  i_lsu_addr[16]);                              // 0x1001 -> a[28] & a[16]
+    assign is_out   = (i_lsu_addr[28] && ~i_lsu_addr[17] && ~i_lsu_addr[16]); // Bit 17=0 ngăn xung đột với UART
+    assign is_in    = (i_lsu_addr[28] && ~i_lsu_addr[17] &&  i_lsu_addr[16]);                             // 0x1001 -> a[28] & a[16]
     // PRIPHERAL
     assign is_ledr  = is_out && (~i_lsu_addr[14] && ~i_lsu_addr[13] && ~i_lsu_addr[12]); // 0x1000_0xxx
     assign is_ledg  = is_out && (~i_lsu_addr[14] && ~i_lsu_addr[13] &&  i_lsu_addr[12]); // 0x1000_1xxx
@@ -163,10 +161,6 @@
                       .ni_iow  (~i_scalar_wren      ),
                       .o_data  (uart_rdata          ), 
                       .i_rxd   (i_uart_rx           ), 
-                      .o_rxrdy (rx_ready            ),
-                      .no_rxrdy(~rx_ready           ),
-                      .o_txrdy (tx_ready            ),
-                      .no_txrdy(~tx_ready           ),
                       .o_txd   (o_uart_tx           ),
                       .ni_cts  (1'b0                )
                     );

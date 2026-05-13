@@ -33,22 +33,17 @@ module fifo #(
   // logic combination for checking i_wren
   always_comb begin
     element_count = wr_ptr - rd_ptr;
-
     if (fifo_en) begin
         o_full = (wr_ptr[ADDR_WIDTH] != rd_ptr[ADDR_WIDTH]) && 
                  (wr_ptr[ADDR_WIDTH-1:0] == rd_ptr[ADDR_WIDTH-1:0]);
     end else begin
-        // Mode 0: Full khi ĐÃ CÓ 1 phần tử (Hành vi 16450)
-        // Lúc này nó ép CPU/UART TX phải đợi cho đến khi 1 byte này được lấy ra
         o_full = (element_count >= 1);
     end
+    o_empty = (rd_ptr == wr_ptr);
     wr_en = i_wren && ~o_full;
     rd_en = i_rden && ~o_empty;
-
     ptr_wraddr = (wr_en) ? (wr_ptr + 1) : wr_ptr;
     ptr_rdaddr = (rd_en) ? (rd_ptr + 1) : rd_ptr;
-
-    o_empty = (rd_ptr == wr_ptr);
   end
 
   always_ff @( posedge i_clk or negedge ni_rst ) begin

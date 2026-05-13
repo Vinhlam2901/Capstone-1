@@ -8,27 +8,36 @@
 //============================================================================================================
 import package_param::*;
 module control_unit (
-  input  wire  [31:0] inst,
-  output reg          br_unsign,
-  output reg          vector_enb,
-  output reg          op1_sel,
-  output reg          op2_sel,
-  output reg          branch_signal,
-  output reg          jmp_signal,
-  output reg          scalar_wb,
-  output reg  [3:0]   alu_opcode,
-  output reg          scalar_wren,
-  output reg          mems_rden,
-  output reg          mems_wren
+	input  wire        i_clk,
+	input  wire        ni_rst,
+  input  wire [31:0] inst,
+  input  wire [31:0] rs1_data,
+  input  wire [1:0]  vl_forwarded,
+  output reg         br_unsign,
+  output reg         vector_enb,
+  output reg         op1_sel,
+  output reg         op2_sel,
+  output reg         branch_signal,
+  output reg         jmp_signal,
+  output reg         scalar_wb,
+  output reg  [3:0]  alu_opcode,
+  output reg         scalar_wren,
+  output reg         mems_rden,
+  output reg         mems_wren,
+  output reg         is_vsetvli,
+  output reg  [7:0]  vlen_enb,
+  output reg  [31:0] vlen_set
 );
 //===================================DECLARATION==================================================
   wire is_add, is_sub, is_and, is_or, is_xor, is_slt, is_sltu, is_sra, is_srl, is_sll, is_mul, is_mulh;
   wire is_addi, is_xori, is_ori, is_andi, is_slli, is_srli, is_srai, is_slti, is_sltiu;
   wire is_beq, is_bne, is_blt, is_bge, is_bltu, is_bgeu;
-  wire is_vsetvli;
   wire [11:0] rtype;
   wire [8:0]  itype;
   wire [5:0]  btype;
+  wire [31:0] vl_calc;
+  reg  [31:0] vl_next;
+
 //==========================RTYPE=========================================================================
   //is_mul
   assign is_mul   = ~inst[12] & ~inst[13] & ~inst[14] & inst[25];
@@ -94,6 +103,23 @@ module control_unit (
   assign btype = {is_beq, is_bne, is_blt, is_bge, is_bltu, is_bgeu};
   assign is_vsetvli = inst[12] & inst[13]  &  inst[14] & (inst[6:0] == VECTOR);
 //==========================alu_opcode=========================================================================
+  // min_max  #(.WIDTH(32))  min_max ( 
+  //                                   .i_vrs1_data(32'd8),
+  //                                   .i_vrs2_data(rs1_data),
+  //                                   .i_cp_un    (1),
+  //                                   .o_max      (),
+  //                                   .o_maxu     (),
+  //                                   .o_min      (),
+  //                                   .o_minu     (vl_calc),
+  //                                   .o_eq       ()
+  //                                 );    
+
+
+
+  always_comb begin
+    vlen_set = 32'd8;            
+    vlen_enb = 8'b1111_1111;
+  end
   always_comb begin : signal_sel
     br_unsign   = 1'b1;
     scalar_wb  = 1'b0;
@@ -175,7 +201,7 @@ module control_unit (
 //==================================SIGNAL===============================================
   case (inst[`OPCODE])
     RTYPE: begin                     // opcode rd, r1, r2
-      scalar_wb    = 1'b0;  // alu_result
+      scalar_wb     = 1'b0;  // alu_result
       op1_sel       = 1'b0;  //rs1
       op2_sel       = 1'b0;  //rs2;
       mems_rden     = 1'b0;
@@ -191,7 +217,7 @@ module control_unit (
       jmp_signal    = 1'b0;
     end
     ILTYPE: begin
-      scalar_wb    = 1'b1;  // read_data
+      scalar_wb     = 1'b1;  // read_data
       op1_sel       = 1'b0;  // rs1
       op2_sel       = 1'b1;  // imm_ex;
       mems_rden     = 1'b1;
