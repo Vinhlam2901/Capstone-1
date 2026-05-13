@@ -4,9 +4,9 @@ import numpy as np
 import os
 
 # Cấu hình phải khớp với Testbench
-WIDTH = 128
-HEIGHT = 128
-INPUT_HEX = "image_out1.hex"
+WIDTH = 8
+HEIGHT = 8
+INPUT_HEX = "output_dog_plus10.hex"
 
 def verify_image():
     # 1. Kiểm tra file tồn tại

@@ -3,10 +3,10 @@ from PIL import Image
 import os
 
 # --- CẤU HÌNH ---
-WIDTH = 128
-HEIGHT = 128
+WIDTH = 8
+HEIGHT = 8
 INPUT_IMAGE = "dog.png" 
-OUTPUT_HEX = "dog1.hex"
+OUTPUT_HEX = "dog_gen.hex"
 
 def create_hex():
     if not os.path.exists(INPUT_IMAGE):
@@ -18,7 +18,9 @@ def create_hex():
         img = Image.open(INPUT_IMAGE)
         # 2. Convert sang ảnh xám (L) và Resize về 64x64
         img = img.convert('L').resize((WIDTH, HEIGHT))
-        
+        width, height = img.size 
+
+        print(f"Kích thước gốc của ảnh là: {width} x {height} pixels")
         # 3. Lấy dữ liệu pixel
         pixels = list(img.getdata())
         

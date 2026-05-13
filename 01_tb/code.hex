@@ -1,7 +1,34 @@
-000070D7    // vsetvli x1, x0, e8 # BẬT NGUỒN VECTOR! (vl = MAX, sew = 8)
-04000513    // addi x10, x0, 64   # Khởi tạo x10 = 0x40 (Con trỏ RAM)
-0207B0D7    // vadd.vi v1, v0, 15 # Nạp v1 = 0F0F0F0F0F0F0F0F
-020500A7    // vse8.v v1, (x10)   # GHI toàn bộ 64-bit của v1 xuống RAM
-020030D7    // vadd.vi v1, v0, 0  # XÓA v1 về 0
-02050107    // vle8.v v2, (x10)   # ĐỌC 64-bit từ RAM lên v2
-0000006F    // jal x0, 0          # KẾT THÚC
+//000070D7    // [00] vsetvli x1, x0, e8       (Bật nguồn Vector)
+//80000537    // [04] lui x10, 0x80000         (x10 = 0x80000000 - Trạng thái UART)
+/800005B7    // [08] lui x11, 0x80000         (x11 = 0x80000000 chuẩn bị cộng thêm)
+//00458593    // [0C] addi x11, x11, 4         (x11 = 0x80000004 - Data UART FIFO)
+//04000613    // [10] addi x12, x0, 0x40       (x12 = 0x40 - Trỏ tới DRAM)
+//00800693    // [14] addi x13, x0, 8          (x13 = 8 khối dữ liệu cần nhận)
+
+            // --- POLLING_LOOP: (Địa chỉ 0x18) ---
+//00052703    // [18] lw x14, 0(x10)           (Đọc trạng thái UART)
+//FE070EE3    // [1C] beq x14, x0, -4          (Nếu = 0, nhảy lùi lại lệnh lw đứng chờ)
+//020580A7    // [20] vle8.v v1, (x11)         (UART có data! Bốc 8 byte vào v1)
+//0320B157    // [24] vadd.vi v2, v1, 50       (Xử lý ảnh: Tăng sáng cả 8 byte lên 50)
+//02060127    // [28] vse8.v v2, (x12)         (Đẩy 8 byte xuống DRAM)
+//00860613    // [2C] addi x12, x12, 8         (Dịch con trỏ DRAM lên 8 byte tiếp theo)
+//FFF68693    // [30] addi x13, x13, -1        (Giảm biến đếm đi 1)
+//FE0692E3    // [34] bne x13, x0, -28         (Nếu chưa xong, nhảy về POLLING_LOOP ở 0x18)
+
+            // --- END: (Địa chỉ 0x38) ---
+//0000006F    // [38] jal x0, 0                (Kết thúc, vòng lặp vô hạn)
+00800513
+0C0572D7
+000015B7
+00058593
+02058087
+000015B7
+00858593
+02058107
+000015B7
+01858593
+02B00007
+000015B7
+01058593
+00058107
+00100073
