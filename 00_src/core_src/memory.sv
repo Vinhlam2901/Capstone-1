@@ -149,8 +149,11 @@ module memory (
     end      
   end
   always_comb begin
-    o_vector_rdata = 64'b0;
-    o_scalar_rdata = 32'b0;
+    o_vector_rdata    = 64'b0;
+    o_scalar_rdata    = 32'b0;
+    mem_ld_align      = 32'b0;
+    mem_ld_misalign   = 32'b0;
+    mem_high_ld_align = 32'b0;
     if (i_vector_rden) begin
       case (i_vlen_en)
         8'b0000_0000: o_vector_rdata = 64'b0;

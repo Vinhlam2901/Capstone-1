@@ -1,54 +1,47 @@
-# File: check_hex.py
 from PIL import Image
 import numpy as np
 import os
-
-# Cấu hình phải khớp với Testbench
 WIDTH = 8
 HEIGHT = 8
-INPUT_HEX = "output_dog_plus10.hex"
-
+INPUT_HEX = "result_aoi.hex"
 def verify_image():
-    # 1. Kiểm tra file tồn tại
     if not os.path.exists(INPUT_HEX):
         print(f"❌ Lỗi: Không tìm thấy file '{INPUT_HEX}'")
         return
-
     print(f"Đang đọc file {INPUT_HEX}...")
-    
     try:
-        # 2. Đọc dữ liệu Hex
         with open(INPUT_HEX, "r") as f:
-            lines = f.readlines()
-        
-        # Lọc dòng trống và convert sang số
-
+            lines = f.readlines()     
         data = []
         for line in lines:
             line = line.strip()
             if line:
-                data.append(int(line, 16))
-        
-        # 3. Kiểm tra số lượng pixel
+                line = line.zfill(16)
+                pixel_chunks = [line[i:i+2] for i in range(0, len(line), 2)]
+                pixel_chunks.reverse()      
+                for pixel in pixel_chunks:
+                    val = int(pixel, 16)
+                    # 💡 ĐOẠN ĐỔI NỀN THẦN THÁNH: Lấy 255 trừ đi giá trị gốc
+                    # Biến 0 (Giống nhau) thành 255 (Trắng)
+                    # Biến >0 (Lỗi) thành màu tối / đen (0)
+                    inverted_val = 255 - val
+                    data.append(inverted_val)      
         expected = WIDTH * HEIGHT
         if len(data) != expected:
             print(f"⚠️ Cảnh báo: Dữ liệu không đủ! Cần {expected}, có {len(data)}")
-            # Bù thêm màu đen (0) vào phần thiếu để vẫn hiện ảnh
-            data += [0] * (expected - len(data))
+            if len(data) < expected:
+                data += [255] * (expected - len(data)) # Thiếu thì bù nền trắng (255)
+            else:
+                data = data[:expected]
         else:
-            print(f"✅ Số lượng pixel khớp hoàn hảo ({len(data)})")
-
-        # 4. Dựng lại ảnh
+            print(f"✅ Số lượng pixel khớp hoàn hảo ({len(data)} pixels)")
+        # Dựng ảnh nền trắng chấm đen
         arr = np.array(data, dtype=np.uint8).reshape((HEIGHT, WIDTH))
         img = Image.fromarray(arr)
-        
-        # 5. Lưu và Hiển thị
         output_filename = "output_verified.png"
         img.save(output_filename)
         print(f"🖼️ Đã lưu ảnh kết quả: {output_filename}")
-        print("👉 Hãy mở file này lên và so sánh với ảnh gốc!")
-        
-        # Thử mở ảnh tự động (trên Linux)
+        print("👉 Nền ảnh mặc định là TRẮNG, các điểm lỗi sẽ hiển thị dạng chấm ĐEN!") 
         try:
             img.show()
         except:

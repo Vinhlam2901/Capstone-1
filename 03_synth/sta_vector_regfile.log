@@ -1,0 +1,63 @@
+OpenSTA 2.0.17 GITDIR-NOT Copyright (c) 2019, Parallax Software, Inc.
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
+
+This is free software, and you are free to change and redistribute it
+under certain conditions; type `show_copying' for details. 
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show_warranty'.
+Startpoint: i_vrs1_addr[2] (input port)
+Endpoint: o_vrs1_data[50] (output port)
+Path Group: **default**
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00 v input external delay
+   0.00    0.00 v i_vrs1_addr[2] (in)
+   2.74    2.74 ^ _14809_/ZN (INV_X1)
+   0.18    2.92 v _12631_/ZN (OAI211_X1)
+   0.17    3.09 ^ _12634_/ZN (AOI221_X1)
+   0.02    3.12 v _12636_/ZN (AOI211_X1)
+   0.10    3.22 ^ _12656_/ZN (AOI21_X1)
+   0.05    3.26 ^ _12320_/Z (MUX2_X1)
+   0.00    3.26 ^ o_vrs1_data[50] (out)
+           3.26   data arrival time
+
+  10.00   10.00   max_delay
+   0.00   10.00   output external delay
+          10.00   data required time
+---------------------------------------------------------
+          10.00   data required time
+          -3.26   data arrival time
+---------------------------------------------------------
+           6.74   slack (MET)
+
+
+Startpoint: i_vrs1_addr[2] (input port)
+Endpoint: o_vrs1_data[50] (output port)
+Path Group: **default**
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00 v input external delay
+   0.00    0.00 v i_vrs1_addr[2] (in)
+   2.74    2.74 ^ _14809_/ZN (INV_X1)
+   0.18    2.92 v _12631_/ZN (OAI211_X1)
+   0.17    3.09 ^ _12634_/ZN (AOI221_X1)
+   0.02    3.12 v _12636_/ZN (AOI211_X1)
+   0.10    3.22 ^ _12656_/ZN (AOI21_X1)
+   0.05    3.26 ^ _12320_/Z (MUX2_X1)
+   0.00    3.26 ^ o_vrs1_data[50] (out)
+           3.26   data arrival time
+
+  10.00   10.00   max_delay
+   0.00   10.00   output external delay
+          10.00   data required time
+---------------------------------------------------------
+          10.00   data required time
+          -3.26   data arrival time
+---------------------------------------------------------
+           6.74   slack (MET)
+
+
+[?2004hOpenSTA> 

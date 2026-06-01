@@ -29,7 +29,7 @@ module regfile (
   wire rs1_bypass_sel;
   wire rs2_bypass_sel;
 
-  reg [31:1] enb;
+  wire [31:1] enb;
 
   genvar i, j;
 

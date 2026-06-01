@@ -52,16 +52,16 @@ module uart_ip (
   reg         baudrate_tick;
   reg         lsr_oe_reg;
 
-  lsr_t       lsr_wire;
-  ier_t       ier_reg;
-  lcr_t       lcr_reg;
-  fcr_t       fcr_reg;
-  mcr_t       mcr_reg;
-  msr_t       msr_reg;
-  spr_t       spr_reg;
-  dll_t       dll_reg;
-  dlm_t       dlm_reg;
-  psd_t       psd_reg;
+  package_param::lsr_t       lsr_wire;
+  package_param::ier_t       ier_reg;
+  package_param::lcr_t       lcr_reg;
+  package_param::fcr_t       fcr_reg;
+  package_param::mcr_t       mcr_reg;
+  package_param::msr_t       msr_reg;
+  package_param::spr_t       spr_reg;
+  package_param::dll_t       dll_reg;
+  package_param::dlm_t       dlm_reg;
+  package_param::psd_t       psd_reg;
   
   wire  [7:0] fifo_tx_data;
   wire  [7:0] fifo_rx_data;
@@ -187,27 +187,27 @@ module uart_ip (
         case (i_addr)
           3'b000: begin
               if(lcr_reg.dlab) begin
-                dll_reg <= dll_t'(i_data);          // strict type for struct dll
+                dll_reg <= package_param::dll_t'(i_data);          // strict type for struct dll
               end
           end 
           3'b001: begin
               if(lcr_reg.dlab) begin
-                dlm_reg <= dlm_t'(i_data);          // strict type for struct dlm
+                dlm_reg <= package_param::dlm_t'(i_data);          // strict type for struct dlm
               end else if (~lcr_reg.dlab) begin                
-                ier_reg <= ier_t'(i_data);          // strict type for struct ier
+                ier_reg <= package_param::ier_t'(i_data);          // strict type for struct ier
               end
           end
           3'b010: begin             
-              fcr_reg <= fcr_t'(i_data);          // strict type for struct lcr
+              fcr_reg <= package_param::fcr_t'(i_data);          // strict type for struct lcr
           end
           3'b011: begin            
-              lcr_reg <= lcr_t'(i_data);          // strict type for struct lcr
+              lcr_reg <= package_param::lcr_t'(i_data);          // strict type for struct lcr
           end
           3'b100: begin            
-              mcr_reg <= mcr_t'(i_data);          // strict type for struct mcr
+              mcr_reg <= package_param::mcr_t'(i_data);          // strict type for struct mcr
           end
           3'b111: begin            
-              spr_reg <= spr_t'(i_data);          // strict type for struct spr
+              spr_reg <= package_param::spr_t'(i_data);          // strict type for struct spr
           end
           default: ;
        endcase

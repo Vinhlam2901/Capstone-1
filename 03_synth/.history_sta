@@ -1,0 +1,4 @@
+gui
+gui::show
+openroad -gui
+exit

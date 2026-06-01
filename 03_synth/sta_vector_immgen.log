@@ -1,0 +1,57 @@
+OpenSTA 2.0.17 GITDIR-NOT Copyright (c) 2019, Parallax Software, Inc.
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
+
+This is free software, and you are free to change and redistribute it
+under certain conditions; type `show_copying' for details. 
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show_warranty'.
+Startpoint: inst_i[5] (input port)
+Endpoint: vimm_o[12] (output port)
+Path Group: **default**
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00 v input external delay
+   0.00    0.00 v inst_i[5] (in)
+   0.01    0.01 ^ _11_/ZN (INV_X1)
+   0.06    0.07 v _20_/ZN (NAND4_X1)
+   0.32    0.38 ^ _25_/ZN (NOR4_X1)
+   0.00    0.38 ^ vimm_o[12] (out)
+           0.38   data arrival time
+
+  10.00   10.00   max_delay
+   0.00   10.00   output external delay
+          10.00   data required time
+---------------------------------------------------------
+          10.00   data required time
+          -0.38   data arrival time
+---------------------------------------------------------
+           9.62   slack (MET)
+
+
+Startpoint: inst_i[5] (input port)
+Endpoint: vimm_o[12] (output port)
+Path Group: **default**
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00 v input external delay
+   0.00    0.00 v inst_i[5] (in)
+   0.01    0.01 ^ _11_/ZN (INV_X1)
+   0.06    0.07 v _20_/ZN (NAND4_X1)
+   0.32    0.38 ^ _25_/ZN (NOR4_X1)
+   0.00    0.38 ^ vimm_o[12] (out)
+           0.38   data arrival time
+
+  10.00   10.00   max_delay
+   0.00   10.00   output external delay
+          10.00   data required time
+---------------------------------------------------------
+          10.00   data required time
+          -0.38   data arrival time
+---------------------------------------------------------
+           9.62   slack (MET)
+
+
+[?2004hOpenSTA> 

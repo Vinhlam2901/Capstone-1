@@ -84,12 +84,12 @@ module alu (
                                                 .rs2_data   (i_op_b),
                                                 .rd_data    (rd_sra)
                                               ); //SRA
-  multiply_extension multiply                 (
-                                                .i_op_a    (i_op_a),
-                                                .i_op_b    (i_op_b),
-                                                .o_mul_low (rd_mul_low),
-                                                .o_mul_high(rd_mul_high)
-                                              );
+  // multiply_extension multiply                 (
+  //                                               .i_op_a    (i_op_a),
+  //                                               .i_op_b    (i_op_b),
+  //                                               .o_mul_low (rd_mul_low),
+  //                                               .o_mul_high(rd_mul_high)
+  //                                             );
   assign rd_slt  = {31'b0, slt};
   assign rd_sltu = {31'b0, sltu};
   //mux
@@ -104,8 +104,10 @@ module alu (
                                 .d7   (rd_sra),
                                 .d8   (rd_or),
                                 .d9   (rd_and),
-                                .d10  (rd_mul_low),
-                                .d11  (rd_mul_high),
+                                .d10  (32'b0),
+                                .d11  (32'b0),
+                                // .d10  (rd_mul_low),
+                                // .d11  (rd_mul_high),
                                 .d12  (32'b0),
                                 .d13  (32'b0),
                                 .d14  (32'b0),

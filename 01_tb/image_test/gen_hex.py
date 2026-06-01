@@ -6,7 +6,7 @@ import os
 WIDTH = 8
 HEIGHT = 8
 INPUT_IMAGE = "dog.png" 
-OUTPUT_HEX = "dog_gen.hex"
+OUTPUT_HEX = "dog_correct.hex"
 
 def create_hex():
     if not os.path.exists(INPUT_IMAGE):

@@ -103,29 +103,23 @@ module control_unit (
   assign btype = {is_beq, is_bne, is_blt, is_bge, is_bltu, is_bgeu};
   assign is_vsetvli = inst[12] & inst[13]  &  inst[14] & (inst[6:0] == VECTOR);
 //==========================alu_opcode=========================================================================
-  // min_max  #(.WIDTH(32))  min_max ( 
-  //                                   .i_vrs1_data(32'd8),
-  //                                   .i_vrs2_data(rs1_data),
-  //                                   .i_cp_un    (1),
-  //                                   .o_max      (),
-  //                                   .o_maxu     (),
-  //                                   .o_min      (),
-  //                                   .o_minu     (vl_calc),
-  //                                   .o_eq       ()
-  //                                 );    
-
-
-
   always_comb begin
     vlen_set = 32'd8;            
     vlen_enb = 8'b1111_1111;
   end
   always_comb begin : signal_sel
-    br_unsign   = 1'b1;
-    scalar_wb  = 1'b0;
-    vector_enb  = inst[6:0]   == VECTOR || inst[6:0] == VSTORE || inst[6:0] == VLOAD;
-    mems_wren   = inst[6:0]   == STYPE;
-    scalar_wren = ~(inst[6:0] == STYPE  || inst[6:0] == BTYPE  || (vector_enb && ~is_vsetvli));
+    alu_opcode    = '0;
+    scalar_wb     = 1'b0;
+    op1_sel       = 1'b0;
+    op2_sel       = 1'b0;
+    mems_rden     = 1'b0;
+    branch_signal = 1'b0;
+    jmp_signal    = 1'b0;
+    br_unsign     = 1'b1;
+    scalar_wb     = 1'b0;
+    vector_enb    = inst[6:0]   == VECTOR || inst[6:0] == VSTORE || inst[6:0] == VLOAD;
+    mems_wren     = inst[6:0]   == STYPE;
+    scalar_wren   = ~(inst[6:0] == STYPE  || inst[6:0] == BTYPE  || (vector_enb && ~is_vsetvli));
     case (inst[`OPCODE])          
       VECTOR: begin
         op1_sel = 1'b0;

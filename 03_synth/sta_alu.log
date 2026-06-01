@@ -1,0 +1,68 @@
+OpenSTA 2.0.17 GITDIR-NOT Copyright (c) 2019, Parallax Software, Inc.
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
+
+This is free software, and you are free to change and redistribute it
+under certain conditions; type `show_copying' for details. 
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show_warranty'.
+Startpoint: i_op_b[1] (input port)
+Endpoint: o_alu_data[0] (output port)
+Path Group: **default**
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00 ^ input external delay
+   0.00    0.00 ^ i_op_b[1] (in)
+   0.02    0.02 v _3119_/Z (XOR2_X1)
+   0.05    0.07 v _3122_/ZN (OR2_X1)
+   0.05    0.12 ^ _3124_/ZN (AOI21_X1)
+   0.03    0.14 v _3127_/ZN (OAI21_X1)
+   0.04    0.19 ^ _3130_/ZN (AOI21_X1)
+   0.03    0.21 v _3133_/ZN (OAI21_X1)
+   0.04    0.26 ^ _3136_/ZN (AOI21_X1)
+   0.03    0.28 v _3139_/ZN (OAI21_X1)
+   0.04    0.33 ^ _3142_/ZN (AOI21_X1)
+   0.03    0.35 v _3145_/ZN (OAI21_X1)
+   0.04    0.40 ^ _3148_/ZN (AOI21_X1)
+   0.03    0.43 v _3151_/ZN (OAI21_X1)
+   0.04    0.47 ^ _3154_/ZN (AOI21_X1)
+   0.03    0.50 v _3157_/ZN (OAI21_X1)
+   0.04    0.54 ^ _3160_/ZN (AOI21_X1)
+   0.03    0.57 v _3163_/ZN (OAI21_X1)
+   0.04    0.61 ^ _3166_/ZN (AOI21_X1)
+   0.03    0.64 v _3169_/ZN (OAI21_X1)
+   0.04    0.68 ^ _3172_/ZN (AOI21_X1)
+   0.03    0.71 v _3175_/ZN (OAI21_X1)
+   0.04    0.75 ^ _3178_/ZN (AOI21_X1)
+   0.03    0.78 v _3181_/ZN (OAI21_X1)
+   0.04    0.82 ^ _3184_/ZN (AOI21_X1)
+   0.03    0.85 v _3187_/ZN (OAI21_X1)
+   0.04    0.89 ^ _3190_/ZN (AOI21_X1)
+   0.03    0.92 v _3208_/ZN (OAI21_X1)
+   0.04    0.97 ^ _3211_/ZN (AOI21_X1)
+   0.03    0.99 v _3214_/ZN (OAI21_X1)
+   0.04    1.04 ^ _3217_/ZN (AOI21_X1)
+   0.03    1.06 v _3220_/ZN (OAI21_X1)
+   0.05    1.11 ^ _3248_/ZN (AOI21_X1)
+   0.03    1.14 v _3256_/ZN (OAI21_X1)
+   0.04    1.18 ^ _3259_/ZN (AOI21_X1)
+   0.04    1.22 ^ _3260_/ZN (XNOR2_X1)
+   0.04    1.26 ^ _3063_/Z (MUX2_X1)
+   0.01    1.27 v _2603_/ZN (OAI21_X1)
+   0.08    1.35 ^ _2604_/ZN (OAI22_X1)
+   0.03    1.38 v _2605_/ZN (OAI22_X1)
+   0.02    1.40 ^ _2617_/ZN (OAI21_X1)
+   0.00    1.40 ^ o_alu_data[0] (out)
+           1.40   data arrival time
+
+   5.00    5.00   max_delay
+   0.00    5.00   output external delay
+           5.00   data required time
+---------------------------------------------------------
+           5.00   data required time
+          -1.40   data arrival time
+---------------------------------------------------------
+           3.60   slack (MET)
+
+
+[?2004hOpenSTA> 

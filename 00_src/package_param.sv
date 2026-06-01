@@ -1,34 +1,34 @@
 package package_param;
-   parameter RTYPE  = 7'b0110011;
-   parameter ITYPE  = 7'b0010011;
-   parameter IITYPE = 7'b1100111;
-   parameter ILTYPE = 7'b0000011;
-   parameter IJTYPE = 7'b1101111;
-   parameter STYPE  = 7'b0100011;
-   parameter BTYPE  = 7'b1100011;
-   parameter U1TYPE = 7'b0110111;
-   parameter U2TYPE = 7'b0010111;
-   parameter VECTOR = 7'b1010111;
-   parameter VLOAD  = 7'b0000111;
-   parameter VSTORE = 7'b0100111;
+   localparam RTYPE  = 7'b0110011;
+   localparam ITYPE  = 7'b0010011;
+   localparam IITYPE = 7'b1100111;
+   localparam ILTYPE = 7'b0000011;
+   localparam IJTYPE = 7'b1101111;
+   localparam STYPE  = 7'b0100011;
+   localparam BTYPE  = 7'b1100011;
+   localparam U1TYPE = 7'b0110111;
+   localparam U2TYPE = 7'b0010111;
+   localparam VECTOR = 7'b1010111;
+   localparam VLOAD  = 7'b0000111;
+   localparam VSTORE = 7'b0100111;
 /*BAUDRATE: number of bit in 1s is [number_of_baud]
 f_fpga = CLK_FPGA
 f_baud = BAUD_x   (with x = 4800, 9600, 19200)
 counter = COUNTER_x = CLK_FPGA / BAUD_x
 */
-   parameter int WIDTH = 32;
-   parameter int CLK_FPAA       = 50_000_000;
-   parameter int BAUD_4800      = 4800;
-   parameter int BAUD_9600      = 9600;
-   parameter int BAUD_19200     = 19200;
-   parameter int COUNTER_4800   = 10417; // 14 bits
-   parameter int WIDTH_4800     = 14;
-   parameter int COUNTER_9600   = 5208;  // 13 bits
-   parameter int WIDTH_9600     = 13;
-   parameter int COUNTER_19200  = 2604;  // 12 bits
-   parameter int WIDTH_19200    = 12;
-   parameter int COUNTER_115200 = 434;  // 12 bits
-   parameter int WIDTH_115200   = 9;
+   localparam WIDTH          = 32;
+   localparam CLK_FPAA       = 50_000_000;
+   localparam BAUD_4800      = 4800;
+   localparam BAUD_9600      = 9600;
+   localparam BAUD_19200     = 19200;
+   localparam COUNTER_4800   = 10417; // 14 bits
+   localparam WIDTH_4800     = 14;
+   localparam COUNTER_9600   = 5208;  // 13 bits
+   localparam WIDTH_9600     = 13;
+   localparam COUNTER_19200  = 2604;  // 12 bits
+   localparam WIDTH_19200    = 12;
+   localparam COUNTER_115200 = 434;  // 12 bits
+   localparam WIDTH_115200   = 9;
 
    `define OPCODE       6:0
    `define RD_ADDR      11:7

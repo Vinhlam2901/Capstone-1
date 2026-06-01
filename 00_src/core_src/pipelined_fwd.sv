@@ -39,15 +39,15 @@ module pipelined_fwd (
   //------------SCALAR_SIGNAL------------------------------------
   reg          pc_src;
   reg  [3:0]   alu_op_io;
-  reg  [31:0]  inst_if;
   reg  [31:0]  pc_if;
-  reg  [31:0]  next_pc;
   reg  [31:0]  pc_plus4;
   reg  [31:0]  pc_wb;
   reg  [31:0]  pc4_wb;
   reg  [31:0]  pc4_ex;
   reg  [31:0]  pc_imm;
   reg  [31:0]  jmp_pc;
+  wire [31:0]  inst_if;
+  wire [31:0]  next_pc;
   wire         branch_signal;
   wire         jmp_signal;
   reg          jmp_check;
@@ -60,7 +60,10 @@ module pipelined_fwd (
   wire         br_equal;
   wire         op2_sel;
   wire         op1_sel;
-  wire [31:0] raw_inst;
+  wire [31:0]  op1;
+  wire [31:0]  op2;
+  wire [31:0]  mem_forward_data;
+  wire [31:0]  raw_inst;
   reg  [1:0]   rs1_forwarding_sel;
   reg  [1:0]   rs2_forwarding_sel;
   reg  [31:0]  rs1_data;
@@ -69,20 +72,18 @@ module pipelined_fwd (
   reg  [31:0]  imm_ex;
   reg  [31:0]  op1_forward;
   reg  [31:0]  op2_forward;
-  reg  [31:0]  op1;
-  reg  [31:0]  op2;
   reg  [31:0]  rd_data_o;
   reg  [31:0]  wb_data_o;
-  reg  [31:0]  mem_forward_data;
   reg  [31:0]  wr_data_scalar;
   reg  [31:0]  read_data_scalar;
   //------------VECTOR_SIGNAL------------------------------------
   wire         valu_unsign;
   wire         vector_wb;
+  wire [4:0]   vr2_sel;
+  wire [4:0]   ex_vr2_sel;
+  wire [63:0]  vop2;
   reg  [7:0]   vlen_enb;
   reg  [3:0]   valu_opcode;
-  reg  [4:0]   vr2_sel;
-  reg  [4:0]   ex_vr2_sel;
   reg  [1:0]   vop1_sel;
   reg  [1:0]   vrs1_forwarding_sel;
   reg  [1:0]   vrs2_forwarding_sel;
@@ -91,7 +92,6 @@ module pipelined_fwd (
   reg  [63:0]  vs2_data;
   reg  [63:0]  vs3_data;
   reg  [63:0]  vop1;
-  reg  [63:0]  vop2;
   reg  [63:0]  vimm_ex;
   reg  [63:0]  vop1_forward;
   reg  [63:0]  vop2_forward;
@@ -101,10 +101,10 @@ module pipelined_fwd (
   reg  [63:0]  wb_vdata_o;
   //=================PIPELINE_REGISTER========================================================================================================================
   // next: incoming data; reg: present data
-  if_id_reg_t  if_id_reg,  if_id_next;     
-  id_ex_reg_t  id_ex_reg,  id_ex_next;
-  ex_mem_reg_t ex_mem_reg, ex_mem_next;
-  mem_wb_reg_t mem_wb_reg, mem_wb_next;
+  package_param::if_id_reg_t  if_id_reg,  if_id_next;     
+  package_param::id_ex_reg_t  id_ex_reg,  id_ex_next;
+  package_param::ex_mem_reg_t ex_mem_reg, ex_mem_next;
+  package_param::mem_wb_reg_t mem_wb_reg, mem_wb_next;
 
   reg [31:0] inst_id_debug;
   reg [31:0] pc_id_debug;
@@ -144,6 +144,7 @@ module pipelined_fwd (
   reg [63:0] valu_wb_debug;
   //----------CONTROL_SIGNAL--------------------------------------
   wire       flush;
+  wire       if_valid;
   reg        vector_stall;
   reg        scalar_stall;
   wire       vector_enb;
@@ -152,7 +153,6 @@ module pipelined_fwd (
   reg        ex_reg_enb;
   reg        mem_reg_enb;
   reg        wb_reg_enb;
-  reg        if_valid;
   reg        if_id_valid;
   reg        id_ex_valid;
   reg        ex_mem_valid;

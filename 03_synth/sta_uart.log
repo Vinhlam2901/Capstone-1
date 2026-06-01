@@ -1,0 +1,83 @@
+OpenSTA 2.0.17 GITDIR-NOT Copyright (c) 2019, Parallax Software, Inc.
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
+
+This is free software, and you are free to change and redistribute it
+under certain conditions; type `show_copying' for details. 
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show_warranty'.
+Startpoint: i_lsu_addr[3] (input port)
+Endpoint: o_scalar_lddata[16] (output port)
+Path Group: **default**
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00 v input external delay
+   0.00    0.00 v i_lsu_addr[3] (in)
+   6.59    6.59 ^ _0633108_/ZN (INV_X1)
+3258.19 3264.78 v _0685740_/ZN (NOR2_X1)
+ 337.49 3602.27 ^ _0698265_/ZN (AOI22_X1)
+  -9.90 3592.36 v _0698267_/ZN (AOI21_X1)
+   8.03 3600.40 ^ _0698277_/ZN (NOR4_X1)
+   0.22 3600.62 v _0698425_/ZN (OAI222_X1)
+   0.25 3600.87 v _0698428_/ZN (OR4_X1)
+   0.09 3600.96 ^ _0698429_/ZN (NOR4_X1)
+   0.06 3601.02 v _0699088_/ZN (OAI221_X1)
+   0.10 3601.12 ^ _0699971_/ZN (OAI221_X1)
+   0.05 3601.17 ^ _0699972_/ZN (AND2_X1)
+   0.05 3601.22 v _0701738_/ZN (AOI21_X1)
+   0.10 3601.32 ^ _0701740_/ZN (NOR2_X1)
+   0.03 3601.35 v _0782897_/ZN (AOI221_X1)
+   0.05 3601.40 ^ _0632512_/ZN (AOI22_X1)
+   0.01 3601.41 v _0632513_/ZN (NOR2_X1)
+   0.00 3601.41 v o_scalar_lddata[16] (out)
+        3601.41   data arrival time
+
+  10.00   10.00   max_delay
+   0.00   10.00   output external delay
+          10.00   data required time
+---------------------------------------------------------
+          10.00   data required time
+        -3601.41   data arrival time
+---------------------------------------------------------
+        -3591.41   slack (VIOLATED)
+
+
+Startpoint: i_lsu_addr[3] (input port)
+Endpoint: o_scalar_lddata[16] (output port)
+Path Group: **default**
+Path Type: max
+
+  Delay    Time   Description
+---------------------------------------------------------
+   0.00    0.00 v input external delay
+   0.00    0.00 v i_lsu_addr[3] (in)
+   6.59    6.59 ^ _0633108_/ZN (INV_X1)
+3258.19 3264.78 v _0685740_/ZN (NOR2_X1)
+ 337.49 3602.27 ^ _0698265_/ZN (AOI22_X1)
+  -9.90 3592.36 v _0698267_/ZN (AOI21_X1)
+   8.03 3600.40 ^ _0698277_/ZN (NOR4_X1)
+   0.22 3600.62 v _0698425_/ZN (OAI222_X1)
+   0.25 3600.87 v _0698428_/ZN (OR4_X1)
+   0.09 3600.96 ^ _0698429_/ZN (NOR4_X1)
+   0.06 3601.02 v _0699088_/ZN (OAI221_X1)
+   0.10 3601.12 ^ _0699971_/ZN (OAI221_X1)
+   0.05 3601.17 ^ _0699972_/ZN (AND2_X1)
+   0.05 3601.22 v _0701738_/ZN (AOI21_X1)
+   0.10 3601.32 ^ _0701740_/ZN (NOR2_X1)
+   0.03 3601.35 v _0782897_/ZN (AOI221_X1)
+   0.05 3601.40 ^ _0632512_/ZN (AOI22_X1)
+   0.01 3601.41 v _0632513_/ZN (NOR2_X1)
+   0.00 3601.41 v o_scalar_lddata[16] (out)
+        3601.41   data arrival time
+
+  10.00   10.00   max_delay
+   0.00   10.00   output external delay
+          10.00   data required time
+---------------------------------------------------------
+          10.00   data required time
+        -3601.41   data arrival time
+---------------------------------------------------------
+        -3591.41   slack (VIOLATED)
+
+
+[?2004hOpenSTA> 

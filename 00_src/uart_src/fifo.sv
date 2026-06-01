@@ -25,13 +25,15 @@ module fifo #(
   reg [ADDR_WIDTH:0]   element_count;
   reg                  wr_en, rd_en;
 
-  initial begin
-    for (int i = 0; i < (1<<ADDR_WIDTH); i++) begin
-      mem[i] = {DATA_WIDTH{1'b0}};
-    end
-  end
+
   // logic combination for checking i_wren
   always_comb begin
+    o_full        = '0;
+    o_empty       = '0;
+    wr_en         = '0;
+    rd_en         = '0;
+    ptr_wraddr    = '0;
+    ptr_rdaddr    = '0;
     element_count = wr_ptr - rd_ptr;
     if (fifo_en) begin
         o_full = (wr_ptr[ADDR_WIDTH] != rd_ptr[ADDR_WIDTH]) && 
@@ -39,9 +41,9 @@ module fifo #(
     end else begin
         o_full = (element_count >= 1);
     end
-    o_empty = (rd_ptr == wr_ptr);
-    wr_en = i_wren && ~o_full;
-    rd_en = i_rden && ~o_empty;
+    o_empty    = (rd_ptr == wr_ptr);
+    wr_en      = i_wren && ~o_full;
+    rd_en      = i_rden && ~o_empty;
     ptr_wraddr = (wr_en) ? (wr_ptr + 1) : wr_ptr;
     ptr_rdaddr = (rd_en) ? (rd_ptr + 1) : rd_ptr;
   end
@@ -50,6 +52,9 @@ module fifo #(
     if(~ni_rst) begin
         wr_ptr <= '0;
         rd_ptr <= '0;
+      for (int i = 0; i < (1<<ADDR_WIDTH); i++) begin
+        mem[i] <= {DATA_WIDTH{1'b0}};
+      end
     end else begin
         wr_ptr <= ptr_wraddr;
         rd_ptr <= ptr_rdaddr;
