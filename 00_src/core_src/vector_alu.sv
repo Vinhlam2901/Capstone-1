@@ -25,7 +25,7 @@ module vector_alu #(
  wire             add_flag, sub_flag, adds_flag, subs_flag;
 //======================INSTANTIATE===========================================================================
   assign sub_flag  =  ~i_valu_opcode[3] && ~i_valu_opcode[2] && ~i_valu_opcode[1] && ~i_valu_opcode[0];  // 4'b0000
-  assign subs_flag =   i_valu_opcode[3] &&  i_valu_opcode[2] && ~i_valu_opcode[1] &&  i_valu_opcode[0];  // 4'b1101
+  assign subs_flag =   i_valu_opcode[3] &&  i_valu_opcode[2] && ~i_valu_opcode[1] &&  i_valu_opcode[0];  // 4'b1101 
   generate
     for (lanes = 0;lanes < VLEN/SEW; lanes = lanes + 1) begin
       // voi moi lane se co tuong ung 8bit vrs1, vrs2 
@@ -84,7 +84,7 @@ module vector_alu #(
     addsub_sat #(.WIDTH(SEW)) add_sat        (
                                               .vrs1_i (vrs1_lanes),
                                               .vrs2_i (vrs2_lanes),
-                                              .i_sign (i_valu_unsign),
+                                              .i_sign (~i_valu_unsign),
                                               .vcin_i (subs_flag),
                                               .vsat_o (vrd_addsubs[lanes*8 + 7 : lanes*8]),
                                               .vcout_o()

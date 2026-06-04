@@ -62,8 +62,8 @@ vector_loop:
     .word 0x02058087        # 0x02058087    (vle8.v v1, (x11) - Load Ảnh A)
     .word 0x02078107        # 0x02078107    (vle8.v v2, (x15) - Load Ảnh B)
     # Tính toán trị tuyệt đối bằng cơ chế song song OR hai chiều
-    .word 0x761101D7        # 0x761101D7    (vssubu.vv v3, v1, v2 -> Chiều xuôi)
-    .word 0x76208257        # 0x76208257    (vssubu.vv v4, v2, v1 -> Chiều ngược)
+    .word 0x8A2081D7        # 0x8A2081D7    (vssubu.vv v3, v1, v2 -> Chiều xuôi)
+    .word 0x8A110257        # 0x8A110257    (vssubu.vv v4, v2, v1 -> Chiều ngược)
     .word 0x2A3201D7        # 0x2A3201D7    (vor.vv v3, v3, v4    -> Hợp nhất)
     .word 0x020801A7        # 0x020801A7    (vse8.v v3, (x16) - Ghi Kết quả)
     addi x11, x11, 8        # 0x00858593    

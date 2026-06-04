@@ -79,7 +79,7 @@ vsetvli      31=0 zimm11          [5]rs1 [3]14..12=0x7 [5]rd [7]6..0=0x57
 37. vsaddu.vv      [6]31..26=0x20 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // ADD SATURATION UNSIGN
 38. vssub.vv       [6]31..26=0x23 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SUB SATURATION
 39. vsmul.vv       [6]31..26=0x27 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // MULTIPLY
-40. vssubu.vv      [6]31..26=0x22 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SUB SATURATION UNSIGN
+40. vssubu.vv      [6]31..26=0x22 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57      // SUB SATURATION UNSIGN
 41. vsll.vv        [6]31..26=0x25 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SHIFT LEFT LOGIC
 42. vsrl.vv        [6]31..26=0x28 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SHIFT RIGHT LOGIC
 43. vsra.vv        [6]31..26=0x29 [1]vm [5]vs2 [5]vs1   [3]14..12=0x0 [5]vd [7]6..0=0x57   // SHIFT RIGHT ARITH

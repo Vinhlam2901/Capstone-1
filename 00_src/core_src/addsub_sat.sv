@@ -45,19 +45,20 @@ module addsub_sat #(
 	// ovf
 	assign ovf = vcin_i ? sub_ovf : add_ovf;
 	//===========RESULT_ADD=================================================
-	assign vrd_add = (i_sign) ?  (																							// khong dau
-																	(~vcout) ? result :	MAX_UNS								// binh thuong ~vcout        : 100 + 50 = 150
-																															// co tran so khong dau vcout: 100 + 200 = 300 -> 255
+	assign vrd_add = (~i_sign) ?  (																											// khong dau
+																	(~vcout) ? result :	MAX_UNS												  // binh thuong ~vcout        : 100 + 50 = 150
+																																											// co tran so khong dau vcout: 100 + 200 = 300 -> 255
 															 ) 
-															:																// co dau
+															:																												// co dau
 															 (
 																	(~ovf) ? result :	((~vrs1_sign) ? MAX_S  : MIN_S) 	// binh thuong ~ovf    : 100 + (-50) = 50
-																															// ovf va A la so duong: 100 + 100 = 200 -> 127
-																															// ovf va A la so am   : -100 + (-100) = -200 -> -127
+																																											// ovf va A la so duong: 100 + 100 = 200 -> 127
+																																											// ovf va A la so am   : -100 + (-100) = -200 -> -127
 															 );
 	//===========RESULT_SUB================================================
-	assign vrd_sub = (i_sign) ? (																							// khong dau
-																	(~vcout) ? result :	MIN_UNS								// binh thuong: 100 - 50 = 50
+	assign vrd_sub = (~i_sign) ? (																							// khong dau
+																	//(vrs1_i >= vrs2_i) ? result :	MIN_UNS								// binh thuong: 100 - 50 = 50
+																	(vrs1_i > vrs2_i) ? MAX_UNS :	MIN_UNS								// binh thuong: 100 - 50 = 50
 																															// co tran so khong dau: 100 - 200 = -100 -> 0
 															 ) 
 															:																// co dau
