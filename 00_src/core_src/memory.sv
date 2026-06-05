@@ -24,7 +24,7 @@ module memory (
  output reg   [63:0] o_vector_rdata
 );
   integer  i;
-  reg  [63:0] mem          [0: 200]; // 2kB [0: 1024]
+  reg  [63:0] mem          [0: 900]; // 2kB [0: 1024]
   reg  [63:0] mem_st_align;
   reg  [63:0] mem_st_misalign;
   reg  [31:0] mem_ld_align;
@@ -109,7 +109,7 @@ module memory (
 
   always_ff @(posedge i_clk) begin : mem_align_store
     if (~i_reset) begin : reset
-      for(i = 0; i <= 1024; i = i + 1) begin
+      for(i = 0; i <= 900; i = i + 1) begin
         mem[i] <= 64'b0;
       end
     end

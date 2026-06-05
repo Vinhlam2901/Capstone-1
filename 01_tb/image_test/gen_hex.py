@@ -3,8 +3,8 @@ from PIL import Image
 import os
 
 # --- CẤU HÌNH ---
-WIDTH = 8
-HEIGHT = 8
+WIDTH = 48
+HEIGHT = 48
 INPUT_IMAGE = "dog.png" 
 OUTPUT_HEX = "dog_correct.hex"
 

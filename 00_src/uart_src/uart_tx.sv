@@ -77,7 +77,7 @@ module uart_tx (
       n_bit_count    <= '0;
       tx_shift_reg   <= '0;
       o_fifo_rden    <= '0;
-      o_tx_done_tick <= '0;
+      o_tx_done_tick <= 1'b1;
       o_tx_serial    <= 1'b1;
     end else begin
       case (state)
@@ -136,7 +136,7 @@ module uart_tx (
           n_bit_count    <= '0;
           tx_shift_reg   <= '0;
           o_fifo_rden    <= '0;
-          o_tx_done_tick <= '0;
+          o_tx_done_tick <= 1'b1;
           o_tx_serial    <= 1'b1;
         end
       endcase
