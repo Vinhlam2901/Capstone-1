@@ -31,4 +31,3 @@ create_filelist:
 	@find ./../01_tb \( -name "*.sv" -o -name "*.v" -o -name "*.svh" -o -name "*.vh" \) >> flist
 	@echo "# SOURCE CODE FILES" >> flist
 	@find ./../00_src \( -name "*.sv" -o -name "*.v" -o -name "*.svh" -o -name "*.vh" \)  >> flist
-

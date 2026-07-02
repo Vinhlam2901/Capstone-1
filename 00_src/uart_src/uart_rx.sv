@@ -37,7 +37,7 @@ module uart_rx (
 // KHỐI 1: STATE REGISTER (Sequential)
 //===========================================================================
   always_ff @(posedge i_clk or negedge ni_rst) begin
-    if (!ni_rst)
+    if(!ni_rst)
       state <= IDLE;
     else
       state <= next_state;

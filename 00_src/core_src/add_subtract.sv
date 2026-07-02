@@ -15,11 +15,13 @@ module add_subtract #(
     output wire [WIDTH-1:0] result_o,
     output                  cout_o
 );
+//======================DECLARATION========================================================
   wire [WIDTH-2:0] c;
   wire [WIDTH-1:0] b_mod_i;
   wire raw_cout;
   genvar i;
   // Tính b XOR cin cho từng bit
+//======================CODE========================================================
   assign b_mod_i      = b_i ^ {WIDTH{cin_i}}; // nếu b_i là [3:0] và cin_i là 1 bit
   // FA[0]
   generate
@@ -33,5 +35,5 @@ module add_subtract #(
 
   assign result_o[WIDTH-1] = a_i[WIDTH-1] ^ b_mod_i[WIDTH-1]  ^ c[WIDTH-2];
   assign cout_o            = cin_i ? ~((a_i[WIDTH-1] & b_mod_i[WIDTH-1]) | ((a_i[WIDTH-1] ^ b_mod_i[WIDTH-1]) & c[WIDTH-2])) :
-                                      (a_i[WIDTH-1] & b_mod_i[WIDTH-1]) | ((a_i[WIDTH-1] ^ b_mod_i[WIDTH-1]) & c[WIDTH-2]);
+                                      ( a_i[WIDTH-1] & b_mod_i[WIDTH-1]) | ((a_i[WIDTH-1] ^ b_mod_i[WIDTH-1]) & c[WIDTH-2]);
 endmodule
